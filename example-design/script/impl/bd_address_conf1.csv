@@ -1,0 +1,122 @@
+######################################################################################
+# This is a generated CSV file representing the addressing in design design_1
+#
+# Format:
+# Master Segment Name, Address Space, Slave Segment, Offset, Range ...
+#      Excluded (optional), Included (optional), Unassigned (optional)
+######################################################################################
+
+# 
+# Assignments in Address Space /axis2axi_bridge_0/m_axi
+#
+SEG_fpga_reg_0_reg0,/axis2axi_bridge_0/m_axi,/fpga_reg_0/interface_aximm/reg0,0x000,4K
+SEG_chain_control_0_reg0,/axis2axi_bridge_0/m_axi,/chain_0/chain_control_0/s_axi_control/reg0,0x1000,4K
+SEG_chain_control_0_reg0_1,/axis2axi_bridge_0/m_axi,/chain_1/chain_control_0/s_axi_control/reg0,0x2000,4K
+SEG_direct_trans_a_0_reg0,/axis2axi_bridge_0/m_axi,/chain_0/direct_trans_a_0/s_axi_control/reg0,0x5000,4K
+SEG_direct_trans_a_0_reg0_1,/axis2axi_bridge_0/m_axi,/chain_1/direct_trans_a_0/s_axi_control/reg0,0x6000,4K
+SEG_lldma_wrapper_0_reg0,/axis2axi_bridge_0/m_axi,/lldma_wrapper_0/s_axi/reg0,0x10000,64K
+SEG_axi4l_decoupler_conv_reg0_1,/axis2axi_bridge_0/m_axi,/function_0/axi4l_decoupler_conv/s_axi/reg0,0x24000,1K
+SEG_axi4l_decoupler_conv_reg0,/axis2axi_bridge_0/m_axi,/function_1/axi4l_decoupler_conv/s_axi/reg0,0x24400,1K
+SEG_axi4l_decoupler_filter_reg0_1,/axis2axi_bridge_0/m_axi,/function_0/axi4l_decoupler_filter/s_axi/reg0,0x25000,1K
+SEG_axi4l_decoupler_filter_reg0,/axis2axi_bridge_0/m_axi,/function_1/axi4l_decoupler_filter/s_axi/reg0,0x26000,1K
+SEG_indirect_reg_access_0_reg0,/axis2axi_bridge_0/m_axi,/indirect_reg_access_0/s_axi/reg0,0x30000,4K
+SEG_ddr4_0_C0_REG,/axis2axi_bridge_0/m_axi,/ddr4_0/C0_DDR4_MEMORY_MAP_CTRL/C0_REG,0x31000,1K
+SEG_ddr4_1_C0_REG,/axis2axi_bridge_0/m_axi,/ddr4_1/C0_DDR4_MEMORY_MAP_CTRL/C0_REG,0x31400,1K
+SEG_ddr4_2_C0_REG,/axis2axi_bridge_0/m_axi,/ddr4_2/C0_DDR4_MEMORY_MAP_CTRL/C0_REG,0x31800,1K
+SEG_ddr4_3_C0_REG,/axis2axi_bridge_0/m_axi,/ddr4_3/C0_DDR4_MEMORY_MAP_CTRL/C0_REG,0x31C00,1K
+SEG_cms_subsystem_0_Mem,/axis2axi_bridge_0/m_axi,/cms_subsystem_0/s_axi_ctrl/Mem,0x40000,256K
+# 
+# Assignments in Address Space /chain_0/chain_control_0/m_axi_extif0_buffer_rd
+#
+SEG_ddr4_0_C0_DDR4_ADDRESS_BLOCK,/chain_0/chain_control_0/m_axi_extif0_buffer_rd,/ddr4_0/C0_DDR4_MEMORY_MAP/C0_DDR4_ADDRESS_BLOCK,0x000000000,16G
+# 
+# Assignments in Address Space /chain_0/chain_control_0/m_axi_extif0_buffer_wr
+#
+SEG_ddr4_0_C0_DDR4_ADDRESS_BLOCK,/chain_0/chain_control_0/m_axi_extif0_buffer_wr,/ddr4_0/C0_DDR4_MEMORY_MAP/C0_DDR4_ADDRESS_BLOCK,0x000000000,16G
+# 
+# Assignments in Address Space /chain_0/chain_control_0/m_axi_extif1_buffer_rd
+#
+SEG_ddr4_2_C0_DDR4_ADDRESS_BLOCK,/chain_0/chain_control_0/m_axi_extif1_buffer_rd,/ddr4_2/C0_DDR4_MEMORY_MAP/C0_DDR4_ADDRESS_BLOCK,0x800000000,16G
+# 
+# Assignments in Address Space /chain_0/chain_control_0/m_axi_extif1_buffer_wr
+#
+SEG_ddr4_2_C0_DDR4_ADDRESS_BLOCK,/chain_0/chain_control_0/m_axi_extif1_buffer_wr,/ddr4_2/C0_DDR4_MEMORY_MAP/C0_DDR4_ADDRESS_BLOCK,0x800000000,16G
+# 
+# Assignments in Address Space /chain_1/chain_control_0/m_axi_extif0_buffer_rd
+#
+SEG_ddr4_0_C0_DDR4_ADDRESS_BLOCK,/chain_1/chain_control_0/m_axi_extif0_buffer_rd,/ddr4_0/C0_DDR4_MEMORY_MAP/C0_DDR4_ADDRESS_BLOCK,0x000000000,16G
+# 
+# Assignments in Address Space /chain_1/chain_control_0/m_axi_extif0_buffer_wr
+#
+SEG_ddr4_0_C0_DDR4_ADDRESS_BLOCK,/chain_1/chain_control_0/m_axi_extif0_buffer_wr,/ddr4_0/C0_DDR4_MEMORY_MAP/C0_DDR4_ADDRESS_BLOCK,0x000000000,16G
+# 
+# Assignments in Address Space /chain_1/chain_control_0/m_axi_extif1_buffer_rd
+#
+SEG_ddr4_2_C0_DDR4_ADDRESS_BLOCK,/chain_1/chain_control_0/m_axi_extif1_buffer_rd,/ddr4_2/C0_DDR4_MEMORY_MAP/C0_DDR4_ADDRESS_BLOCK,0x800000000,16G
+# 
+# Assignments in Address Space /chain_1/chain_control_0/m_axi_extif1_buffer_wr
+#
+SEG_ddr4_2_C0_DDR4_ADDRESS_BLOCK,/chain_1/chain_control_0/m_axi_extif1_buffer_wr,/ddr4_2/C0_DDR4_MEMORY_MAP/C0_DDR4_ADDRESS_BLOCK,0x800000000,16G
+# 
+# Assignments in Address Space /lldma_wrapper_0/m_axi_cd_0
+#
+SEG_ddr4_0_C0_DDR4_ADDRESS_BLOCK,/lldma_wrapper_0/m_axi_cd_0,/ddr4_0/C0_DDR4_MEMORY_MAP/C0_DDR4_ADDRESS_BLOCK,0x000000000,16G
+# 
+# Assignments in Address Space /lldma_wrapper_0/m_axi_cd_1
+#
+SEG_ddr4_0_C0_DDR4_ADDRESS_BLOCK,/lldma_wrapper_0/m_axi_cd_1,/ddr4_0/C0_DDR4_MEMORY_MAP/C0_DDR4_ADDRESS_BLOCK,0x000000000,16G
+# 
+# Assignments in Address Space /lldma_wrapper_0/m_axi_cd_2
+#
+SEG_ddr4_0_C0_DDR4_ADDRESS_BLOCK,/lldma_wrapper_0/m_axi_cd_2,/ddr4_0/C0_DDR4_MEMORY_MAP/C0_DDR4_ADDRESS_BLOCK,0x000000000,16G
+# 
+# Assignments in Address Space /lldma_wrapper_0/m_axi_cd_3
+#
+SEG_ddr4_0_C0_DDR4_ADDRESS_BLOCK,/lldma_wrapper_0/m_axi_cd_3,/ddr4_0/C0_DDR4_MEMORY_MAP/C0_DDR4_ADDRESS_BLOCK,0x000000000,16G
+# 
+# Assignments in Address Space /lldma_wrapper_0/m_axi_cu_0
+#
+SEG_ddr4_0_C0_DDR4_ADDRESS_BLOCK,/lldma_wrapper_0/m_axi_cu_0,/ddr4_0/C0_DDR4_MEMORY_MAP/C0_DDR4_ADDRESS_BLOCK,0x000000000,16G
+# 
+# Assignments in Address Space /lldma_wrapper_0/m_axi_cu_1
+#
+SEG_ddr4_0_C0_DDR4_ADDRESS_BLOCK,/lldma_wrapper_0/m_axi_cu_1,/ddr4_0/C0_DDR4_MEMORY_MAP/C0_DDR4_ADDRESS_BLOCK,0x000000000,16G
+# 
+# Assignments in Address Space /lldma_wrapper_0/m_axi_cu_2
+#
+SEG_ddr4_0_C0_DDR4_ADDRESS_BLOCK,/lldma_wrapper_0/m_axi_cu_2,/ddr4_0/C0_DDR4_MEMORY_MAP/C0_DDR4_ADDRESS_BLOCK,0x000000000,16G
+# 
+# Assignments in Address Space /lldma_wrapper_0/m_axi_cu_3
+#
+SEG_ddr4_0_C0_DDR4_ADDRESS_BLOCK,/lldma_wrapper_0/m_axi_cu_3,/ddr4_0/C0_DDR4_MEMORY_MAP/C0_DDR4_ADDRESS_BLOCK,0x000000000,16G
+# 
+# Assignments in Address Space /function_0/axi4l_decoupler_conv/m_axi
+#
+SEG_conversion_ada_0_reg0,/function_0/axi4l_decoupler_conv/m_axi,/function_0/conversion_ada_0/s_axi_control/reg0,0x000,1K
+# 
+# Assignments in Address Space /function_0/axi4l_decoupler_filter/m_axi
+#
+SEG_filter_resize_0_reg0,/function_0/axi4l_decoupler_filter/m_axi,/function_0/filter_resize_0/s_axi_control/reg0,0x000,1K
+# 
+# Assignments in Address Space /function_0/conversion_ada_0/m_axi_ingr_frame_buffer
+#
+SEG_ddr4_1_C0_DDR4_ADDRESS_BLOCK,/function_0/conversion_ada_0/m_axi_ingr_frame_buffer,/ddr4_1/C0_DDR4_MEMORY_MAP/C0_DDR4_ADDRESS_BLOCK,0x400000000,16G
+# 
+# Assignments in Address Space /function_1/axi4l_decoupler_conv/m_axi
+#
+SEG_conversion_ada_0_reg0,/function_1/axi4l_decoupler_conv/m_axi,/function_1/conversion_ada_0/s_axi_control/reg0,0x000,1K
+# 
+# Assignments in Address Space /function_1/axi4l_decoupler_filter/m_axi
+#
+SEG_filter_resize_0_reg0,/function_1/axi4l_decoupler_filter/m_axi,/function_1/filter_resize_0/s_axi_control/reg0,0x000,1K
+# 
+# Assignments in Address Space /function_1/conversion_ada_0/m_axi_ingr_frame_buffer
+#
+SEG_ddr4_1_C0_DDR4_ADDRESS_BLOCK,/function_1/conversion_ada_0/m_axi_ingr_frame_buffer,/ddr4_1/C0_DDR4_MEMORY_MAP/C0_DDR4_ADDRESS_BLOCK,0x400000000,16G
+# 
+# Assignments in Address Space /indirect_reg_access_0/m_axi
+#
+SEG_ddr4_0_C0_DDR4_ADDRESS_BLOCK,/indirect_reg_access_0/m_axi,/ddr4_0/C0_DDR4_MEMORY_MAP/C0_DDR4_ADDRESS_BLOCK,0x000000000,16G
+SEG_ddr4_1_C0_DDR4_ADDRESS_BLOCK,/indirect_reg_access_0/m_axi,/ddr4_1/C0_DDR4_MEMORY_MAP/C0_DDR4_ADDRESS_BLOCK,0x400000000,16G
+SEG_ddr4_2_C0_DDR4_ADDRESS_BLOCK,/indirect_reg_access_0/m_axi,/ddr4_2/C0_DDR4_MEMORY_MAP/C0_DDR4_ADDRESS_BLOCK,0x800000000,16G
+SEG_ddr4_3_C0_DDR4_ADDRESS_BLOCK,/indirect_reg_access_0/m_axi,/ddr4_3/C0_DDR4_MEMORY_MAP/C0_DDR4_ADDRESS_BLOCK,0xC00000000,16G

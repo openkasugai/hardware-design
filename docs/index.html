@@ -1,0 +1,1417 @@
+
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Function Block Development Guidelines &#8212; OpenKasugai Hardware 2024.11.18 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=649a27d8" />
+    <link rel="stylesheet" type="text/css" href="_static/bizstyle.css?v=658d757c" />
+    
+    <script src="_static/documentation_options.js?v=cc5a0791"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <!--[if lt IE 9]>
+    <script src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="nav-item nav-item-0"><a href="#">OpenKasugai Hardware 2024.11.18 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Function Block Development Guidelines</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="function-block-development-guidelines">
+<h1>Function Block Development Guidelines<a class="headerlink" href="#function-block-development-guidelines" title="Link to this heading">¶</a></h1>
+<div class="toctree-wrapper compound">
+</div>
+<p>For the Japanese site, please refer to <a class="reference external" href="./index_ja.html">here</a>.</p>
+<section id="purpose-and-positioning-of-this-document">
+<h2>Purpose and positioning of this document<a class="headerlink" href="#purpose-and-positioning-of-this-document" title="Link to this heading">¶</a></h2>
+<section id="purpose">
+<h3>Purpose<a class="headerlink" href="#purpose" title="Link to this heading">¶</a></h3>
+<p>This document provides a basic specification of a implementation sample and instructions for building a function block for the developer of the function block.</p>
+</section>
+<section id="function-block-development-flow">
+<h3>Function block development flow<a class="headerlink" href="#function-block-development-flow" title="Link to this heading">¶</a></h3>
+<ol class="arabic simple">
+<li><p>Designs and implements function blocks based on the <a class="reference external" href="#function-block-interface-specification">Function Block Interface</a> specification described below.</p></li>
+<li><p>Change the build script, etc. and replace the existing function block in the implementation sample with the new function block.</p></li>
+<li><p>Perform an FPGA Bitstream building.</p></li>
+</ol>
+</section>
+<section id="fpga-card-specifications">
+<h3>FPGA Card Specifications<a class="headerlink" href="#fpga-card-specifications" title="Link to this heading">¶</a></h3>
+<p>The specifications of the FPGA card used when the implementation sample was designed are shown below. See <a class="reference external" href="https://www.amd.com/ja/products/accelerators/alveo/u250/a-u250-a64g-pq-g.html">Device Vendor Sites</a> for more information.</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Item</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>FPGA used</p></td>
+<td><p>Xilinx Ultrascale+ XCU250-FIGD2104-2L-e</p></td>
+</tr>
+<tr class="row-odd"><td><p>Installed Board</p></td>
+<td><p>Alveo U250 (PCI card)</p></td>
+</tr>
+<tr class="row-even"><td><p>Operating frequency</p></td>
+<td><p>50MHz / 100MHz / 150MHz / 200MHz / 250MHz / 300MHz</p></td>
+</tr>
+<tr class="row-odd"><td><p>External interface</p></td>
+<td><p>PCIe Gen3 x16 / QSFP28 / DDR4 / UART / GPIO</p></td>
+</tr>
+<tr class="row-even"><td><p>Input clock</p></td>
+<td><p>100MHz / 161MHz / 300MHz</p></td>
+</tr>
+<tr class="row-odd"><td><p>Configuration</p></td>
+<td><p>Flash ROM Write, USB Write, PCI Write (Tandem PCIe)</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="configuring-the-implementation-sample">
+<h2>Configuring the Implementation Sample<a class="headerlink" href="#configuring-the-implementation-sample" title="Link to this heading">¶</a></h2>
+<p>Shows the block configuration for a implementation sample. The red hatched area is the area to be replaced with a new function block.</p>
+<img alt="_images/block_diagram_func.png" src="_images/block_diagram_func.png" />
+<section id="chain-control">
+<h3>Chain Control<a class="headerlink" href="#chain-control" title="Link to this heading">¶</a></h3>
+<p>This provides a function chain data transfer function. It performs association (ID conversion) and data transfer between logical connection (connection) of external IF and logical connection (function channel) in FPGA.</p>
+</section>
+<section id="lldma-low-latency-direct-device-memory-access">
+<h3>LLDMA (Low-Latency direct Device Memory Access)<a class="headerlink" href="#lldma-low-latency-direct-device-memory-access" title="Link to this heading">¶</a></h3>
+<p>In addition to the transfer between the host and the FPGA card, it provides the ability to transfer data directly between the FPGA cards without going through the CPU processing of the host (D2D).</p>
+</section>
+<section id="network-terminator">
+<h3>Network Terminator<a class="headerlink" href="#network-terminator" title="Link to this heading">¶</a></h3>
+<p>Provides external interface functions via Ethernet.</p>
+<p>The network termination function is not included in the implementation sample. For information about this function, refer to <a class="reference external" href="../../README.md#about-the-network-termination-function">“About the network termination function” in the README</a>.</p>
+</section>
+<section id="direct-transfer-adapter">
+<h3>Direct Transfer Adapter<a class="headerlink" href="#direct-transfer-adapter" title="Link to this heading">¶</a></h3>
+<p>Bypasses the function block and allows direct transfer from ingress to egress of chain control.</p>
+</section>
+<section id="function-conversion-adapter-filter-resize">
+<h3>Function (Conversion Adapter/Filter Resize)<a class="headerlink" href="#function-conversion-adapter-filter-resize" title="Link to this heading">¶</a></h3>
+<p>The implementation sample provides image processing functionality. It consists of a conversion adapter block and a filter Resize block.</p>
+<ul class="simple">
+<li><p>Conversion adapter block, which buffers data frames and distributes image processing tasks.</p></li>
+<li><p>Filter Resize Block: Enables parallel execution of distributed image processing tasks (5x5 median filter and resizing).</p></li>
+</ul>
+</section>
+<section id="other-blocks">
+<h3>Other Blocks<a class="headerlink" href="#other-blocks" title="Link to this heading">¶</a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Block name</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>PCIe Interface</p></td>
+<td><p>Hard IP for terminating PCI Express x16 bus.</p></td>
+</tr>
+<tr class="row-odd"><td><p>MIG</p></td>
+<td><p>Memory Interface Generator. Provides an interface to access DDR SDRAM on ALVEO cards.</p></td>
+</tr>
+<tr class="row-even"><td><p>AXIS to AXI bridge</p></td>
+<td><p>Translates register access from PCI Express from AXI4-Stream to the AXI4-Lite protocol used internally by the FPGA.</p></td>
+</tr>
+<tr class="row-odd"><td><p>CMS</p></td>
+<td><p>Card Management System. Obtain power and temperature information for the ALVEO card.</p></td>
+</tr>
+<tr class="row-even"><td><p>Global Registers</p></td>
+<td><p>Provides a set of registers for controlling and monitoring the entire implementation sample.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="clock-reset-type">
+<h3>Clock/Reset type<a class="headerlink" href="#clock-reset-type" title="Link to this heading">¶</a></h3>
+<p>The Clock/Reset for the implementation sample is shown below.</p>
+<img alt="_images/example_clock_struct.png" src="_images/example_clock_struct.png" />
+</section>
+</section>
+<section id="function-block-interface-specification">
+<span id="func-intf-spec"></span><h2>Function Block Interface Specification<a class="headerlink" href="#function-block-interface-specification" title="Link to this heading">¶</a></h2>
+<p>Following are the interface specifications that a function block must meet:</p>
+<img alt="_images/inter_block_intf_func.png" src="_images/inter_block_intf_func.png" />
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Signal Name/Bus Name</p></th>
+<th class="head"><p>I/O Type <a class="footnote-reference brackets" href="#id2" id="id1" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a></p></th>
+<th class="head"><p>Width</p></th>
+<th class="head"><p>Connection-Destination Block</p></th>
+<th class="head"><p>Function Description</p></th>
+<th class="head"><p>Necessity</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>aclk_mm</p></td>
+<td><p>input</p></td>
+<td><p>1</p></td>
+<td><p>Clocking Wizard</p></td>
+<td><p>200 MHz clock</p></td>
+<td><p>Required</p></td>
+</tr>
+<tr class="row-odd"><td><p>aresetn_mm_filter</p></td>
+<td><p>input</p></td>
+<td><p>1</p></td>
+<td><p>Processor System Reset</p></td>
+<td><p>Subblock 0 Reset (aclk_mm synchronous, negative logic)</p></td>
+<td><p>Required</p></td>
+</tr>
+<tr class="row-even"><td><p>aresetn_mm_conv</p></td>
+<td><p>input</p></td>
+<td><p>1</p></td>
+<td><p>Processor System Reset</p></td>
+<td><p>Subblock 1 Reset (aclk_mm synchronous, negative logic)</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>s_axis_ingr_req</p></td>
+<td><p>AXIS Slave</p></td>
+<td><p>64</p></td>
+<td><p>Direct Transfer Adapter</p></td>
+<td><p>Ingress Transfer Request</p></td>
+<td><p>Required</p></td>
+</tr>
+<tr class="row-even"><td><p>m_axis_ingr_resp</p></td>
+<td><p>AXIS Master</p></td>
+<td><p>64</p></td>
+<td><p>Direct Transfer Adapter</p></td>
+<td><p>Ingress Transfer Response</p></td>
+<td><p>Required</p></td>
+</tr>
+<tr class="row-odd"><td><p>s_axis_ingr_data</p></td>
+<td><p>AXIS Slave</p></td>
+<td><p>512</p></td>
+<td><p>Direct Transfer Adapter</p></td>
+<td><p>Ingress Transfer Data Stream</p></td>
+<td><p>Required</p></td>
+</tr>
+<tr class="row-even"><td><p>m_axis_egr_req</p></td>
+<td><p>AXIS Master</p></td>
+<td><p>64</p></td>
+<td><p>Direct Transfer Adapter</p></td>
+<td><p>Egress Transfer Request</p></td>
+<td><p>Required</p></td>
+</tr>
+<tr class="row-odd"><td><p>s_axis_egr_resp</p></td>
+<td><p>AXIS Slave</p></td>
+<td><p>64</p></td>
+<td><p>Direct Transfer Adapter</p></td>
+<td><p>Egress Forward Response</p></td>
+<td><p>Required</p></td>
+</tr>
+<tr class="row-even"><td><p>m_axis_egr_data</p></td>
+<td><p>AXIS Master</p></td>
+<td><p>512</p></td>
+<td><p>Direct Transfer Adapter</p></td>
+<td><p>Egress transport data stream</p></td>
+<td><p>Required</p></td>
+</tr>
+<tr class="row-odd"><td><p>m_axi_conv</p></td>
+<td><p>AXI4 Master</p></td>
+<td><p>512</p></td>
+<td><p>AXI Interconnect</p></td>
+<td><p>DDR Access Bus</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>s_axi_control_func</p></td>
+<td><p>AXIL Slave</p></td>
+<td><p>32</p></td>
+<td><p>AXI Interconnect</p></td>
+<td><p>Subblock 0 Register Access Bus</p></td>
+<td><p>Required</p></td>
+</tr>
+<tr class="row-odd"><td><p>s_axi_control_conv</p></td>
+<td><p>AXIL Slave</p></td>
+<td><p>32</p></td>
+<td><p>AXI Interconnect</p></td>
+<td><p>Subblock 1 Register Access Bus</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>detect_fault_filter</p></td>
+<td><p>output</p></td>
+<td><p>1</p></td>
+<td><p>global register</p></td>
+<td><p>Subblock 0 Failure Detection Notification (positive logic, level)</p></td>
+<td><p>Required</p></td>
+</tr>
+<tr class="row-odd"><td><p>detect_fault_conv</p></td>
+<td><p>output</p></td>
+<td><p>1</p></td>
+<td><p>global register</p></td>
+<td><p>Subblock 1 Failure Detection Notification (positive logic, level)</p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<aside class="footnote-list brackets">
+<aside class="footnote brackets" id="id2" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">1</a><span class="fn-bracket">]</span></span>
+<p><code class="code docutils literal notranslate"><span class="pre">AXIS</span></code> : AXI4-Stream / <code class="code docutils literal notranslate"><span class="pre">AXIL</span></code> : AXI4-Lite</p>
+</aside>
+</aside>
+<section id="clock-input-aclk-mm">
+<h3>Clock input (aclk_mm)<a class="headerlink" href="#clock-input-aclk-mm" title="Link to this heading">¶</a></h3>
+<p>The sample implementation assumes a 200 MHz clock ( <code class="code docutils literal notranslate"><span class="pre">clk_pcie200</span></code>) generated by the Clocking Wizard IP is connected and all other interfaces (Reset, AXI Bus, Failure Detection Notification) are synchronized to it.</p>
+</section>
+<section id="reset-input-aresetn-mm-filter-conv">
+<h3>Reset input (aresetn_mm_filter/conv)<a class="headerlink" href="#reset-input-aresetn-mm-filter-conv" title="Link to this heading">¶</a></h3>
+<p>In the implementation sample, two reset inputs are provided for resetting the function block. This is because the implementation sample includes two subblocks within the function block so that they can be reset independently.</p>
+<p>If a function block consists of only one block, the reset for the second block ( <code class="code docutils literal notranslate"><span class="pre">aresetn_mm_conv</span></code>) can be disconnected.</p>
+</section>
+<section id="ingress-transport-interface-axis-ingr-req-resp-data">
+<h3>Ingress transport interface (axis_ingr_req/resp/data)<a class="headerlink" href="#ingress-transport-interface-axis-ingr-req-resp-data" title="Link to this heading">¶</a></h3>
+<p>Interface for data frame transfer on the ingress side. Consists of three AXI4-Stream interfaces (req/resp/data). The protocol is will explain later.</p>
+</section>
+<section id="egress-forwarding-interface-axis-egr-req-resp-data">
+<h3>Egress forwarding interface (axis_egr_req/resp/data)<a class="headerlink" href="#egress-forwarding-interface-axis-egr-req-resp-data" title="Link to this heading">¶</a></h3>
+<p>Interface for data frame transfer on egress side. Consists of three AXI4-Stream interfaces (req/resp/data). The protocol is will explain later.</p>
+</section>
+<section id="ddr-access-interface-m-axi-conv">
+<h3>DDR Access Interface (m_axi_conv)<a class="headerlink" href="#ddr-access-interface-m-axi-conv" title="Link to this heading">¶</a></h3>
+<p>AXI4 (Memory Mapped) interface for accessing DDR4 SDRAM on an ALVEO card. The implementation sample uses it for frame buffering on the ingress side. If buffering to DDR is not required by the function block function, it can be disconnected.</p>
+</section>
+<section id="register-access-interface-s-axi-control-func-conv">
+<h3>Register access interface (s_axi_control_func/conv)<a class="headerlink" href="#register-access-interface-s-axi-control-func-conv" title="Link to this heading">¶</a></h3>
+<p>This is a register access interface for controlling function blocks. The implementation sample contains two subblocks within a function block, so an interface is provided for each.</p>
+<p>If the function block contains only one block, the interface for the second block ( <code class="code docutils literal notranslate"><span class="pre">s_axi_control_conv</span></code>) can be disconnected.</p>
+</section>
+<section id="failure-detection-notification-detect-fault-filter-conv">
+<h3>Failure Detection Notification (detect_fault_filter/conv)<a class="headerlink" href="#failure-detection-notification-detect-fault-filter-conv" title="Link to this heading">¶</a></h3>
+<p>This interface is used to notify the global register of a failure detected in a function block. The implementation sample contains two subblocks within a block, so an interface is provided for each.</p>
+<p>Read Clear : This is a positive logic level signal that outputs the result of OR-combining all bits of the implemented failure detection register.</p>
+<p>If the function block contains only one block, the interface for the second block ( <code class="code docutils literal notranslate"><span class="pre">detect_fault_conv</span></code>) can be zero fixed.</p>
+</section>
+</section>
+<section id="protocol-for-transferring-data-between-blocks">
+<h2>Protocol for transferring data between blocks<a class="headerlink" href="#protocol-for-transferring-data-between-blocks" title="Link to this heading">¶</a></h2>
+<p>Indicates the interface between blocks used to transfer data frames. This interface consists of three AXI4-Streams. The sender block is the Source Block, and the receiver block is the Sink Block. For an ingress forwarding interface, the direct-forward adapter block is the Source Block and the function block is the Sink Block; for an egress forwarding interface, the function block is the Source Block and the direct-forward adapter block is the Sink Block.</p>
+<img alt="_images/inter_block_intf.png" src="_images/inter_block_intf.png" />
+<section id="relationship-between-dataframes-and-transactions">
+<h3>Relationship between DataFrames and Transactions<a class="headerlink" href="#relationship-between-dataframes-and-transactions" title="Link to this heading">¶</a></h3>
+<p>A dataframe is the entire data input and output by a single computing task. For example, in an image processing task, a data frame is expected to be an entire image frame.</p>
+<p>When transferring data between blocks, transferring large data frames in bulk can occupy the bus for a long time and cause deadlocks between function channels. Therefore, this protocol divides data frames into transactions of up to 32 kByte and transfers them.</p>
+<p>The transaction that includes the beginning of the data frame is given the Start of Frame (SOF) flag and information about the total length of the data frame. Transactions that include the end of a data frame are given the End of Frame (EOF) flag.</p>
+<p>You cannot mix data frames in a single transaction.</p>
+</section>
+<section id="req-resp">
+<h3>req / resp<a class="headerlink" href="#req-resp" title="Link to this heading">¶</a></h3>
+<p>This is a 64 bit wide control bus for determining the data length of the transaction to be transferred between Source and Sink. Transfers the following structure in one cycle per transaction:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Field Name</p></th>
+<th class="head"><p>Bit Range</p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Range</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>frame_length</p></td>
+<td><p>[31:0]</p></td>
+<td><p>Data Frame Length (In bytes, valid only for SOF)</p></td>
+<td><p>1～4,294,967,295</p></td>
+</tr>
+<tr class="row-odd"><td><p>channel</p></td>
+<td><p>[40:32]</p></td>
+<td><p>Function Channel ID</p></td>
+<td><p>0～511 <a class="footnote-reference brackets" href="#id5" id="id3" role="doc-noteref"><span class="fn-bracket">[</span>2<span class="fn-bracket">]</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p>sof</p></td>
+<td><p>[41]</p></td>
+<td><p>SOF Flag (When 1, the beginning of the transaction data is the beginning of the data frame.)</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>eof</p></td>
+<td><p>[42]</p></td>
+<td><p>EOF flag (When 1, the end of the transaction data is the end of the data frame.)</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>direct</p></td>
+<td><p>[43]</p></td>
+<td><p>Direct transfer indication bit. Not used in function blocks.</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>(reserved)</p></td>
+<td><p>[47:44]</p></td>
+<td><p>Reserved</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>burst_length</p></td>
+<td><p>[63:48]</p></td>
+<td><p>Transaction data length (bytes, up to 32768 Bytes)</p></td>
+<td><p>0～32,768 <a class="footnote-reference brackets" href="#id6" id="id4" role="doc-noteref"><span class="fn-bracket">[</span>3<span class="fn-bracket">]</span></a></p></td>
+</tr>
+</tbody>
+</table>
+<aside class="footnote-list brackets">
+<aside class="footnote brackets" id="id5" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id3">2</a><span class="fn-bracket">]</span></span>
+<p>The maximum range allowed on the protocol. The actual possible values depend on the function block.</p>
+</aside>
+<aside class="footnote brackets" id="id6" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id4">3</a><span class="fn-bracket">]</span></span>
+<p>1 ≦ req.burst_length ≦ 32768, 0 ≦ resp.burst_length ≦ req.burst_length</p>
+</aside>
+</aside>
+<p>The burst_length in req indicates the length of transaction data that the Source Block can transfer. The burst_length in resp indicates the length of transaction data that can be received by the Sink Block. The burst_length of resp must not exceed the burst_length of req. If the sink block cannot receive a single byte of transaction data (for example, because the buffer is full), you can set the burst_length of resp to 0.</p>
+</section>
+<section id="data">
+<h3>data<a class="headerlink" href="#data" title="Link to this heading">¶</a></h3>
+<p>This is a 512 bit wide bus for transferring data between blocks based on the transaction data length determined by req/resp communication.</p>
+<p>The transaction data length matches the burst_length value of resp. If the burst_length of resp is 0, no data is transferred between blocks.</p>
+<p>The transaction data begins at the LSB of the 512 bit bus. If the transaction data length is not a multiple of 64 bytes, invalid data is appended to the end of the remaining space in the last cycle of the transaction data.</p>
+<p>The byte order for transferring 258 bytes of 0~257 in 5 cycles is shown below.</p>
+<img alt="_images/inter_block_if_burst_format.png" src="_images/inter_block_if_burst_format.png" />
+</section>
+<section id="timing">
+<h3>Timing<a class="headerlink" href="#timing" title="Link to this heading">¶</a></h3>
+<p>The signal timing of req/resp/data is shown below. When multiple functional channel transactions are superimposed on the same interblock data transfer interface, the channel order of req/resp/data must be in-order.</p>
+<img alt="_images/inter_block_timing.png" src="_images/inter_block_timing.png" />
+</section>
+</section>
+<section id="filter-resize-function-block-specification">
+<h2>Filter Resize Function Block Specification<a class="headerlink" href="#filter-resize-function-block-specification" title="Link to this heading">¶</a></h2>
+<p>The following shows the block configuration of the Filter Resize function block implemented in the implementation sample.</p>
+<img alt="_images/block_diagram_func_detail.png" src="_images/block_diagram_func_detail.png" />
+<section id="conversion-adapter">
+<h3>Conversion Adapter<a class="headerlink" href="#conversion-adapter" title="Link to this heading">¶</a></h3>
+<p>This sub-block buffers the image data corresponding to the data frame of the implementation sample and distributes the image data to two Filter Resize circuits.</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Block Name</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>ch_seperation</p></td>
+<td><p>Receives data frames from the Direct Transfer Adapter and buffers them in the DDR. Images are transferred to Filter Resize in order after buffering is completed.</p></td>
+</tr>
+<tr class="row-odd"><td><p>ch_multiple</p></td>
+<td><p>Coordinates the input of image processing results from two Filter Resizes and transfers the received image processing results to the Direct Transfer Adapter.</p></td>
+</tr>
+<tr class="row-even"><td><p>control_s_axi</p></td>
+<td><p>Provides a set of control registers.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="filter-resize">
+<h3>Filter Resize<a class="headerlink" href="#filter-resize" title="Link to this heading">¶</a></h3>
+<p>This sub-block performs filtering and resizing on the image data.</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Block Name</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>data_in</p></td>
+<td><p>Receives a dataframe from the conversion adapter and inputs it to a later filter_proc.</p></td>
+</tr>
+<tr class="row-odd"><td><p>filter_proc</p></td>
+<td><p>Receives image data from data_in and transfers it to resize_proc with 5x5 median filtering.</p></td>
+</tr>
+<tr class="row-even"><td><p>resize_proc</p></td>
+<td><p>Receives image data from filter_proc and applies resizing. Applies Bilinear as the interpolation algorithm. Transfer resizing results to data_out.</p></td>
+</tr>
+<tr class="row-odd"><td><p>data_out</p></td>
+<td><p>Receives image data from resize_proc and outputs it to the Conversion Adapter.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="function-block-register-map">
+<h3>Function block register map<a class="headerlink" href="#function-block-register-map" title="Link to this heading">¶</a></h3>
+<section id="id7">
+<h4>Conversion Adapter<a class="headerlink" href="#id7" title="Link to this heading">¶</a></h4>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Offset</p></th>
+<th class="head"><p>Name</p></th>
+<th class="head"><p>Type <a class="footnote-reference brackets" href="#id9" id="id8" role="doc-noteref"><span class="fn-bracket">[</span>4<span class="fn-bracket">]</span></a></p></th>
+<th class="head"><p>Initial Value</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>0x0000</p></td>
+<td><p>control</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0010</p></td>
+<td><p>module_id</p></td>
+<td><p>R</p></td>
+<td><p>0x0000F1C2</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0020</p></td>
+<td><p>local_version</p></td>
+<td><p>R</p></td>
+<td><p>(Version Number)</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0030</p></td>
+<td><p>m_axi_ingr_frame_buffer_l</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0034</p></td>
+<td><p>m_axi_ingr_frame_buffer_h</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0040</p></td>
+<td><p>rows_in</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0044</p></td>
+<td><p>cols_in</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0050</p></td>
+<td><p>stat_sel_channel</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0060</p></td>
+<td><p>stat_ingr_rcv_data_value_l</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0064</p></td>
+<td><p>stat_ingr_rcv_data_value_h</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0070</p></td>
+<td><p>stat_ingr_snd_data_0_value_l</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0074</p></td>
+<td><p>stat_ingr_snd_data_0_value_h</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0078</p></td>
+<td><p>stat_ingr_snd_data_1_value_l</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x007C</p></td>
+<td><p>stat_ingr_snd_data_1_value_h</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0080</p></td>
+<td><p>stat_egr_rcv_data_0_value_l</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0084</p></td>
+<td><p>stat_egr_rcv_data_0_value_h</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0088</p></td>
+<td><p>stat_egr_rcv_data_1_value_l</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x008C</p></td>
+<td><p>stat_egr_rcv_data_1_value_h</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0090</p></td>
+<td><p>stat_egr_snd_data_value_l</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0094</p></td>
+<td><p>stat_egr_snd_data_value_h</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0098</p></td>
+<td><p>stat_ingr_rcv_frame_value</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x00A0</p></td>
+<td><p>stat_ingr_snd_frame_0_value</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x00A4</p></td>
+<td><p>stat_ingr_snd_frame_1_value</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x00A8</p></td>
+<td><p>stat_egr_rcv_frame_0_value</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x00AC</p></td>
+<td><p>stat_egr_rcv_frame_1_value</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x00B0</p></td>
+<td><p>stat_egr_snd_frame_value</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x00C0</p></td>
+<td><p>stat_ingr_frame_buffer_overflow</p></td>
+<td><p>R/WC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x00C4</p></td>
+<td><p>stat_ingr_frame_buffer_usage</p></td>
+<td><p>R</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0100</p></td>
+<td><p>detect_fault</p></td>
+<td><p>R</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0110</p></td>
+<td><p>ingr_rcv_protocol_fault</p></td>
+<td><p>R/WC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0118</p></td>
+<td><p>ingr_rcv_protocol_fault_mask</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x011C</p></td>
+<td><p>ingr_rcv_protocol_fault_force</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0120</p></td>
+<td><p>ingr_snd_protocol_fault_0</p></td>
+<td><p>R/WC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0128</p></td>
+<td><p>ingr_snd_protocol_fault_0_mask</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x012C</p></td>
+<td><p>ingr_snd_protocol_fault_0_force</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0130</p></td>
+<td><p>ingr_snd_protocol_fault_1</p></td>
+<td><p>R/WC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0138</p></td>
+<td><p>ingr_snd_protocol_fault_1_mask</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x013C</p></td>
+<td><p>ingr_snd_protocol_fault_1_force</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0140</p></td>
+<td><p>egr_rcv_protocol_fault_0</p></td>
+<td><p>R/WC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0148</p></td>
+<td><p>egr_rcv_protocol_fault_0_mask</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x014C</p></td>
+<td><p>egr_rcv_protocol_fault_0_force</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0150</p></td>
+<td><p>egr_rcv_protocol_fault_1</p></td>
+<td><p>R/WC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0158</p></td>
+<td><p>egr_rcv_protocol_fault_1_mask</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x015C</p></td>
+<td><p>egr_rcv_protocol_fault_1_force</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0160</p></td>
+<td><p>egr_snd_protocol_fault</p></td>
+<td><p>R/WC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0168</p></td>
+<td><p>egr_snd_protocol_fault_mask</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x016C</p></td>
+<td><p>egr_snd_protocol_fault_force</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0170</p></td>
+<td><p>mem_parity_fault</p></td>
+<td><p>R/WC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0178</p></td>
+<td><p>mem_parity_fault_mask</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x017C</p></td>
+<td><p>mem_parity_fault_force</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0180</p></td>
+<td><p>ingr_rcv_length_fault</p></td>
+<td><p>R/WC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0188</p></td>
+<td><p>ingr_rcv_length_fault_mask</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x018C</p></td>
+<td><p>ingr_rcv_length_fault_force</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0190</p></td>
+<td><p>streamif_stall</p></td>
+<td><p>R</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0198</p></td>
+<td><p>streamif_stall_mask</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x019C</p></td>
+<td><p>streamif_stall_force</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x01C0</p></td>
+<td><p>ingr_rcv_insert_protocol_fault</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x01C4</p></td>
+<td><p>ingr_snd_insert_protocol_fault_0</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x01C8</p></td>
+<td><p>ingr_snd_insert_protocol_fault_1</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x01CC</p></td>
+<td><p>egr_rcv_insert_protocol_fault_0</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x01D0</p></td>
+<td><p>egr_rcv_insert_protocol_fault_1</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x01D4</p></td>
+<td><p>egr_snd_insert_protocol_fault</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x01D8</p></td>
+<td><p>insert_mem_parity_fault</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+</tbody>
+</table>
+<aside class="footnote-list brackets">
+<aside class="footnote brackets" id="id9" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id8">4</a><span class="fn-bracket">]</span></span>
+<p><code class="code docutils literal notranslate"><span class="pre">R/W</span></code>: Read Write / <code class="code docutils literal notranslate"><span class="pre">R</span></code>: Read Only / <code class="code docutils literal notranslate"><span class="pre">RC</span></code>: Read Clear / <code class="code docutils literal notranslate"><span class="pre">R/WC</span></code>: Read Write Clear</p>
+</aside>
+</aside>
+</section>
+<section id="id10">
+<h4>Filter Resize<a class="headerlink" href="#id10" title="Link to this heading">¶</a></h4>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Offset</p></th>
+<th class="head"><p>Name</p></th>
+<th class="head"><p>Type <a class="footnote-reference brackets" href="#id12" id="id11" role="doc-noteref"><span class="fn-bracket">[</span>5<span class="fn-bracket">]</span></a></p></th>
+<th class="head"><p>Initial Value</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>0x0000</p></td>
+<td><p>control</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0010</p></td>
+<td><p>module_id</p></td>
+<td><p>R</p></td>
+<td><p>0x0000F2C2</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0020</p></td>
+<td><p>local_version</p></td>
+<td><p>R</p></td>
+<td><p>(Version Number)</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0030</p></td>
+<td><p>rows_in</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0034</p></td>
+<td><p>cols_in</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0038</p></td>
+<td><p>rows_out</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x003C</p></td>
+<td><p>cols_out</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0040</p></td>
+<td><p>stat_sel_channel</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0050</p></td>
+<td><p>stat_ingr_rcv_data_0_value_l</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0054</p></td>
+<td><p>stat_ingr_rcv_data_0_value_h</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0058</p></td>
+<td><p>stat_ingr_rcv_data_1_value_l</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x005C</p></td>
+<td><p>stat_ingr_rcv_data_1_value_h</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0060</p></td>
+<td><p>stat_egr_snd_data_0_value_l</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0064</p></td>
+<td><p>stat_egr_snd_data_0_value_h</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0068</p></td>
+<td><p>stat_egr_snd_data_1_value_l</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x006C</p></td>
+<td><p>stat_egr_snd_data_1_value_h</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0070</p></td>
+<td><p>stat_ingr_rcv_frame_0_value</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0074</p></td>
+<td><p>stat_ingr_rcv_frame_1_value</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0078</p></td>
+<td><p>stat_egr_snd_frame_0_value</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x007C</p></td>
+<td><p>stat_egr_snd_frame_1_value</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0100</p></td>
+<td><p>detect_fault</p></td>
+<td><p>R</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0110</p></td>
+<td><p>ingr_rcv_protocol_fault_0</p></td>
+<td><p>R/WC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0118</p></td>
+<td><p>ingr_rcv_protocol_fault_0_mask</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x011C</p></td>
+<td><p>ingr_rcv_protocol_fault_0_force</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0120</p></td>
+<td><p>ingr_rcv_protocol_fault_1</p></td>
+<td><p>R/WC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0128</p></td>
+<td><p>ingr_rcv_protocol_fault_1_mask</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x012C</p></td>
+<td><p>ingr_rcv_protocol_fault_1_force</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0130</p></td>
+<td><p>egr_snd_protocol_fault_0</p></td>
+<td><p>R/WC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0138</p></td>
+<td><p>egr_snd_protocol_fault_0_mask</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x013C</p></td>
+<td><p>egr_snd_protocol_fault_0_force</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0140</p></td>
+<td><p>egr_snd_protocol_fault_1</p></td>
+<td><p>R/WC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0148</p></td>
+<td><p>egr_snd_protocol_fault_1_mask</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x014C</p></td>
+<td><p>egr_snd_protocol_fault_1_force</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0150</p></td>
+<td><p>streamif_stall</p></td>
+<td><p>R</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0158</p></td>
+<td><p>streamif_stall_mask</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x015C</p></td>
+<td><p>streamif_stall_force</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0180</p></td>
+<td><p>ingr_rcv_insert_protocol_fault_0</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0184</p></td>
+<td><p>ingr_rcv_insert_protocol_fault_1</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0188</p></td>
+<td><p>egr_snd_insert_protocol_fault_0</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x018C</p></td>
+<td><p>egr_snd_insert_protocol_fault_1</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+</tbody>
+</table>
+<aside class="footnote-list brackets">
+<aside class="footnote brackets" id="id12" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id11">5</a><span class="fn-bracket">]</span></span>
+<p><code class="code docutils literal notranslate"><span class="pre">R/W</span></code>: Read Write / <code class="code docutils literal notranslate"><span class="pre">R</span></code>: Read Only / <code class="code docutils literal notranslate"><span class="pre">RC</span></code>: Read Clear / <code class="code docutils literal notranslate"><span class="pre">R/WC</span></code>: Read Write Clear</p>
+</aside>
+</aside>
+</section>
+</section>
+<section id="resource-information">
+<h3>Resource Information<a class="headerlink" href="#resource-information" title="Link to this heading">¶</a></h3>
+<p>A implementation sample resource report is provided as a reference.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>1. CLB Logic
+------------
+
++----------------------------+--------+-------+------------+-----------+-------+
+|          Site Type         |  Used  | Fixed | Prohibited | Available | Util% |
++----------------------------+--------+-------+------------+-----------+-------+
+| CLB LUTs                   | 546439 |     0 |          0 |   1728000 | 31.62 |
+|   LUT as Logic             | 514191 |     0 |          0 |   1728000 | 29.76 |
+|   LUT as Memory            |  32248 |     0 |          0 |    791040 |  4.08 |
+|     LUT as Distributed RAM |  21292 |     0 |            |           |       |
+|     LUT as Shift Register  |  10956 |     0 |            |           |       |
+| CLB Registers              | 708697 |     8 |          0 |   3456000 | 20.51 |
+|   Register as Flip Flop    | 708564 |     8 |          0 |   3456000 | 20.50 |
+|   Register as Latch        |    128 |     0 |          0 |   3456000 | &lt;0.01 |
+|   Register as AND/OR       |      5 |     0 |          0 |   3456000 | &lt;0.01 |
+| CARRY8                     |  16506 |     0 |          0 |    216000 |  7.64 |
+| F7 Muxes                   |  15776 |     0 |          0 |    864000 |  1.83 |
+| F8 Muxes                   |   3797 |     0 |          0 |    432000 |  0.88 |
+| F9 Muxes                   |     92 |     0 |          0 |    216000 |  0.04 |
++----------------------------+--------+-------+------------+-----------+-------+
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>14. SLR CLB Logic and Dedicated Block Utilization
+-------------------------------------------------
+
++----------------------------+--------+--------+--------+-------+--------+--------+--------+--------+
+|          Site Type         |  SLR0  |  SLR1  |  SLR2  |  SLR3 | SLR0 % | SLR1 % | SLR2 % | SLR3 % |
++----------------------------+--------+--------+--------+-------+--------+--------+--------+--------+
+| CLB                        |  40680 |  50177 |  24476 |  6500 |  75.33 |  92.92 |  45.33 |  12.04 |
+|   CLBL                     |  22119 |  27186 |  13172 |  3602 |  75.54 |  92.85 |  44.99 |  12.30 |
+|   CLBM                     |  18561 |  22991 |  11304 |  2898 |  75.08 |  93.01 |  45.73 |  11.72 |
+| CLB LUTs                   | 185688 | 228277 | 108015 | 24459 |  42.98 |  52.84 |  25.00 |   5.66 |
+|   LUT as Logic             | 182063 | 211766 |  98446 | 21916 |  42.14 |  49.02 |  22.79 |   5.07 |
+|     using O5 output only   |   1352 |   2272 |   1260 |   518 |   0.31 |   0.53 |   0.29 |   0.12 |
+|     using O6 output only   | 141199 | 149601 |  55462 | 14701 |  32.68 |  34.63 |  12.84 |   3.40 |
+|     using O5 and O6        |  39512 |  59893 |  41724 |  6697 |   9.15 |  13.86 |   9.66 |   1.55 |
+|   LUT as Memory            |   3625 |  16511 |   9569 |  2543 |   1.83 |   8.35 |   4.84 |   1.29 |
+|     LUT as Distributed RAM |   2912 |   8054 |   8450 |  1876 |   1.47 |   4.07 |   4.27 |   0.95 |
+|       using O5 output only |      0 |      0 |      0 |     0 |   0.00 |   0.00 |   0.00 |   0.00 |
+|       using O6 output only |    320 |   1314 |      2 |     0 |   0.16 |   0.66 |  &lt;0.01 |   0.00 |
+|       using O5 and O6      |   2592 |   6740 |   8448 |  1876 |   1.31 |   3.41 |   4.27 |   0.95 |
+|     LUT as Shift Register  |    713 |   8457 |   1119 |   667 |   0.36 |   4.28 |   0.57 |   0.34 |
+|       using O5 output only |      0 |      0 |      0 |     0 |   0.00 |   0.00 |   0.00 |   0.00 |
+|       using O6 output only |    630 |   4530 |    986 |   632 |   0.32 |   2.29 |   0.50 |   0.32 |
+|       using O5 and O6      |     83 |   3927 |    133 |    35 |   0.04 |   1.99 |   0.07 |   0.02 |
+| CLB Registers              | 215945 | 335319 | 118243 | 39190 |  24.99 |  38.81 |  13.69 |   4.54 |
+| CARRY8                     |   6800 |   6128 |   3520 |    58 |  12.59 |  11.35 |   6.52 |   0.11 |
+| F7 Muxes                   |   8404 |   5627 |   1244 |   501 |   3.89 |   2.61 |   0.58 |   0.23 |
+| F8 Muxes                   |   2109 |   1388 |    242 |    58 |   1.95 |   1.29 |   0.22 |   0.05 |
+| F9 Muxes                   |      0 |     92 |      0 |     0 |   0.00 |   0.17 |   0.00 |   0.00 |
+| Block RAM Tile             |    220 |    428 |    124 |  25.5 |  32.74 |  63.69 |  18.45 |   3.79 |
+|   RAMB36/FIFO              |    166 |    350 |    122 |    25 |  24.70 |  52.08 |  18.15 |   3.72 |
+|   RAMB18                   |    108 |    156 |      4 |     1 |   8.04 |  11.61 |   0.30 |   0.07 |
+| URAM                       |      0 |     92 |      0 |     0 |   0.00 |  28.75 |   0.00 |   0.00 |
+| DSPs                       |      3 |    537 |     15 |     3 |   0.10 |  17.48 |   0.49 |   0.10 |
+| Unique Control Sets        |   5073 |  10444 |   2766 |  1159 |   4.70 |   9.67 |   2.56 |   1.07 |
++----------------------------+--------+--------+--------+-------+--------+--------+--------+--------+
+* Note: Available Control Sets based on CLB Registers / 8
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>1. Utilization by Hierarchy
+---------------------------
+
++-------------------------------+----------------------------------------+------------+------------+---------+-------+--------+--------+--------+------+------------+
+|           Instance            |                  Module                | Total LUTs | Logic LUTs | LUTRAMs |  SRLs |   FFs  | RAMB36 | RAMB18 | URAM | DSP Blocks |
++-------------------------------+----------------------------------------+------------+------------+---------+-------+--------+--------+--------+------+------------+
+| function_0                    |                 function_0_imp_1MVGFZK |      60739 |      59436 |     208 |  1095 |  61079 |    117 |      5 |   32 |         75 |
+|   axi4l_decoupler_conv        |        design_1_axi4l_decoupler_conv_0 |          7 |          7 |       0 |     0 |      0 |      0 |      0 |    0 |          0 |
+|   axi4l_decoupler_filter      |      design_1_axi4l_decoupler_filter_0 |          7 |          7 |       0 |     0 |      0 |      0 |      0 |    0 |          0 |
+|   conversion_ada_0            |            design_1_conversion_ada_0_0 |      25150 |      24075 |     208 |   867 |  30289 |     43 |      3 |   32 |         21 |
+|   dfx_decoupler_conv_axi_m    |    design_1_dfx_decoupler_conv_axi_m_0 |          5 |          5 |       0 |     0 |      0 |      0 |      0 |    0 |          0 |
+|   dfx_decoupler_conv_axis_m   |   design_1_dfx_decoupler_conv_axis_m_0 |          9 |          9 |       0 |     0 |      0 |      0 |      0 |    0 |          0 |
+|   dfx_decoupler_conv_axis_s   |   design_1_dfx_decoupler_conv_axis_s_0 |          9 |          9 |       0 |     0 |      0 |      0 |      0 |    0 |          0 |
+|   dfx_decoupler_conv_fault    |    design_1_dfx_decoupler_conv_fault_0 |          1 |          1 |       0 |     0 |      0 |      0 |      0 |    0 |          0 |
+|   dfx_decoupler_filter_axis_m | design_1_dfx_decoupler_filter_axis_m_0 |          6 |          6 |       0 |     0 |      0 |      0 |      0 |    0 |          0 |
+|   dfx_decoupler_filter_axis_s | design_1_dfx_decoupler_filter_axis_s_0 |          6 |          6 |       0 |     0 |      0 |      0 |      0 |    0 |          0 |
+|   dfx_decoupler_filter_fault  |  design_1_dfx_decoupler_filter_fault_0 |          1 |          1 |       0 |     0 |      0 |      0 |      0 |    0 |          0 |
+|   filter_resize_0             |             design_1_filter_resize_0_0 |      35554 |      35326 |       0 |   228 |  30790 |     74 |      2 |    0 |         54 |
+|   xlconcat_1                  |                  design_1_xlconcat_1_1 |          0 |          0 |       0 |     0 |      0 |      0 |      0 |    0 |          0 |
+| function_1                    |                 function_1_imp_1I7392R |      60704 |      59401 |     208 |  1095 |  61087 |    117 |      5 |   32 |         75 |
+|   axi4l_decoupler_conv        |        design_1_axi4l_decoupler_conv_1 |          7 |          7 |       0 |     0 |      0 |      0 |      0 |    0 |          0 |
+|   axi4l_decoupler_filter      |      design_1_axi4l_decoupler_filter_1 |          7 |          7 |       0 |     0 |      0 |      0 |      0 |    0 |          0 |
+|   conversion_ada_0            |            design_1_conversion_ada_0_1 |      25121 |      24046 |     208 |   867 |  30270 |     43 |      3 |   32 |         21 |
+|   dfx_decoupler_conv_axi_m    |    design_1_dfx_decoupler_conv_axi_m_1 |          5 |          5 |       0 |     0 |      0 |      0 |      0 |    0 |          0 |
+|   dfx_decoupler_conv_axis_m   |   design_1_dfx_decoupler_conv_axis_m_1 |          9 |          9 |       0 |     0 |      0 |      0 |      0 |    0 |          0 |
+|   dfx_decoupler_conv_axis_s   |   design_1_dfx_decoupler_conv_axis_s_1 |          9 |          9 |       0 |     0 |      0 |      0 |      0 |    0 |          0 |
+|   dfx_decoupler_conv_fault    |    design_1_dfx_decoupler_conv_fault_1 |          1 |          1 |       0 |     0 |      0 |      0 |      0 |    0 |          0 |
+|   dfx_decoupler_filter_axis_m | design_1_dfx_decoupler_filter_axis_m_1 |          6 |          6 |       0 |     0 |      0 |      0 |      0 |    0 |          0 |
+|   dfx_decoupler_filter_axis_s | design_1_dfx_decoupler_filter_axis_s_1 |          6 |          6 |       0 |     0 |      0 |      0 |      0 |    0 |          0 |
+|   dfx_decoupler_filter_fault  |  design_1_dfx_decoupler_filter_fault_1 |          1 |          1 |       0 |     0 |      0 |      0 |      0 |    0 |          0 |
+|   filter_resize_0             |             design_1_filter_resize_0_1 |      35551 |      35323 |       0 |   228 |  30817 |     74 |      2 |    0 |         54 |
+|   xlconcat_1                  |                  design_1_xlconcat_1_2 |          0 |          0 |       0 |     0 |      0 |      0 |      0 |    0 |          0 |
++-------------------------------+----------------------------------------+------------+------------+---------+-------+--------+--------+--------+------+------------+
+* Note: The sum of lower-level cells may be larger than their parent cells total, due to cross-hierarchy LUT combining
+</pre></div>
+</div>
+</section>
+</section>
+<section id="design-of-a-new-function-block">
+<h2>Design of a new function block<a class="headerlink" href="#design-of-a-new-function-block" title="Link to this heading">¶</a></h2>
+<p>From now on, the root of the hardware-design repository should be <code class="code docutils literal notranslate"><span class="pre">$workdir/hardware-design</span></code> and the module name of the new function block to be added should be <code class="code docutils literal notranslate"><span class="pre">myfunc</span></code>.</p>
+<section id="directory-configuration">
+<h3>Directory Configuration<a class="headerlink" href="#directory-configuration" title="Link to this heading">¶</a></h3>
+<p>Create a directory under <code class="code docutils literal notranslate"><span class="pre">$workdir/hardware-design/function/</span></code> to store the new function block.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>$workdir/hardware-design/function/
++-- myfunc/
+    +-- src/
+    |   +-- hls/
+    |   |   +-- include/
+    |   |   |   +-- *.h / *.hpp ..... C/C++ header files for high-level synthesis
+    |   |   +-- *.c / *.hpp ......... C/C++ source files for high-level synthesis
+    |   +-- hdl/
+    |   |   +-- *.v / *.sv .......... RTL source file
+    |   +-- ip/
+    |       +-- *.xci ............... IP generation file
+    +-- script/
+        +-- hls/
+        |   +-- ipgen.sh ............ IP build script
+        |   +-- Makefile ............ IP build makefile
+        |   +-- ipgen_template.tc ... TCL script templates for IP builds
+        +-- ip/
+            +-- Makefile.bd_top.mk .. makefile for IP
+            +-- myfunc_bd.tcl ....... TCL scripts for generating block designs
+            +-- package_kernel.bd_top.tcl
+                              ....... TCL script for IP
+</pre></div>
+</div>
+<p>You can omit directories that are not used. For example, <code class="code docutils literal notranslate"><span class="pre">hls/</span></code> is not needed if you do not include high-level synthesis sources.</p>
+<p>The scripts under <code class="code docutils literal notranslate"><span class="pre">script/</span></code> can be created by referring to the scripts of existing function blocks.</p>
+<p>The important thing is <code class="code docutils literal notranslate"><span class="pre">Makefile.bd_top.mk</span></code>, which must be configured to allow packaging of function blocks with the following command.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span><span class="nv">$workdir</span>/hardware-design/function/myfunc/script/ip
+$<span class="w"> </span>make<span class="w"> </span>-f<span class="w"> </span>Makefile.bd_top.mk<span class="w"> </span>all
+</pre></div>
+</div>
+</section>
+<section id="edit-build-script">
+<h3>Edit Build Script<a class="headerlink" href="#edit-build-script" title="Link to this heading">¶</a></h3>
+<p>Add to your script the source code that you put in the directory to get myfunc into your Vivado project.</p>
+<section id="add-hdl-source-file">
+<h4>Add HDL Source File<a class="headerlink" href="#add-hdl-source-file" title="Link to this heading">¶</a></h4>
+<p>Edit <code class="code docutils literal notranslate"><span class="pre">$workdir/hardware-design/example-design/script/impl/build_design.tcl</span></code> and add the <code class="code docutils literal notranslate"><span class="pre">add_files</span></code> command.</p>
+<div class="highlight-tcl notranslate"><div class="highlight"><pre><span></span><span class="c"># Add source</span>
+<span class="nv">add_files</span><span class="w"> </span><span class="o">-</span>norecurse<span class="w"> </span><span class="k">{</span><span class="w"> </span><span class="err">\</span>
+<span class="nv">..</span><span class="o">/</span>..<span class="o">/</span>function<span class="o">/</span>myfunc<span class="o">/</span>src<span class="o">/</span>hdl<span class="o">/</span>AAA<span class="o">/</span>aaa.sv<span class="w"> </span><span class="err">\</span>
+<span class="nv">..</span><span class="o">/</span>..<span class="o">/</span>function<span class="o">/</span>myfunc<span class="o">/</span>src<span class="o">/</span>hdl<span class="o">/</span>AAA<span class="o">/</span>bbb.sv<span class="w"> </span><span class="err">\</span>
+<span class="nv">..</span><span class="o">/</span>..<span class="o">/</span>function<span class="o">/</span>myfunc<span class="o">/</span>src<span class="o">/</span>hdl<span class="o">/</span>BBB<span class="o">/</span>ccc.sv<span class="w"> </span><span class="err">\</span>
+<span class="nv">..</span><span class="o">/</span>..<span class="o">/</span>function<span class="o">/</span>myfunc<span class="o">/</span>src<span class="o">/</span>hdl<span class="o">/</span>BBB<span class="o">/</span>ddd.v<span class="w"> </span><span class="err">\</span>
+<span class="k">}</span>
+
+<span class="c"># Add IP</span>
+<span class="nv">add_files</span><span class="w"> </span><span class="o">-</span>norecurse<span class="w"> </span><span class="k">{</span><span class="w"> </span><span class="err">\</span>
+<span class="nv">..</span><span class="o">/</span>..<span class="o">/</span>function<span class="o">/</span>myfunc<span class="o">/</span>src<span class="o">/</span>ip<span class="o">/</span>AAA<span class="o">/</span>aaa.xci<span class="w"> </span><span class="err">\</span>
+<span class="nv">..</span><span class="o">/</span>..<span class="o">/</span>function<span class="o">/</span>myfunc<span class="o">/</span>src<span class="o">/</span>ip<span class="o">/</span>BBB<span class="o">/</span>bbb.xci<span class="w"> </span><span class="err">\</span>
+<span class="nv">..</span><span class="o">/</span>..<span class="o">/</span>function<span class="o">/</span>myfunc<span class="o">/</span>src<span class="o">/</span>ip<span class="o">/</span>CCC<span class="o">/</span>ccc.xci<span class="w"> </span><span class="err">\</span>
+<span class="k">}</span>
+</pre></div>
+</div>
+</section>
+<section id="add-high-level-synthesis-build-commands">
+<h4>Add high-level synthesis build commands<a class="headerlink" href="#add-high-level-synthesis-build-commands" title="Link to this heading">¶</a></h4>
+<p>Edit <code class="code docutils literal notranslate"><span class="pre">$workdir/hardware-design/example-design/script/Makefile`</span></code> and add code to execute <code class="code docutils literal notranslate"><span class="pre">Makefile.bd_top.mk</span></code>.</p>
+<div class="highlight-diff notranslate"><div class="highlight"><pre><span></span><span class="w"> </span> CONVERSION_ADAPTOR_DIR = ../../function/filter_resize/conversion_adaptor/script/ip
+<span class="gd">- FILTER_RESIZE_DIR = ../../function/filter_resize/filter_resize/script/ip</span>
+<span class="gi">+ MYFUNC_DIR = ../../function/myfunc/script/ip</span>
+</pre></div>
+</div>
+<div class="highlight-diff notranslate"><div class="highlight"><pre><span></span><span class="gd">- ifeq ($(USE_FIL), 1)</span>
+<span class="gd">- LIST_XO += $(CONVERSION_ADAPTOR_DIR)/conversion_adaptor.xo</span>
+<span class="gd">- LIST_XO += $(FILTER_RESIZE_DIR)/filter_resize.xo</span>
+<span class="gd">- endif</span>
+<span class="gi">+ LIST_XO += $(MYFUNC_DIR)/myfunc.xo</span>
+</pre></div>
+</div>
+<div class="highlight-diff notranslate"><div class="highlight"><pre><span></span><span class="w"> </span> distcleanall: distclean
+<span class="w"> </span>   make -C $(CHAIN_CONTROL_DIR) -f Makefile.bd_top.mk clean
+<span class="w"> </span>   make -C $(DIRECT_TRANS_ADAPTOR_DIR) -f Makefile.bd_top.mk clean
+<span class="w"> </span>   make -C $(CONVERSION_ADAPTOR_DIR) -f Makefile.bd_top.mk clean
+<span class="gd">-   make -C $(FILTER_RESIZE_DIR) -f Makefile.bd_top.mk clean</span>
+<span class="gi">+   make -C $(MYFUNC_DIR) -f Makefile.bd_top.mk clean</span>
+</pre></div>
+</div>
+<div class="highlight-diff notranslate"><div class="highlight"><pre><span></span><span class="w"> </span> # Building kernel
+<span class="gd">- $(FILTER_RESIZE_DIR)/%.xo:</span>
+<span class="w"> </span>   -   make -C $(FILTER_RESIZE_DIR) -f Makefile.bd_top.mk all
+<span class="gi">+ $(MYFUNC_DIR)/%.xo:</span>
+<span class="gi">+   make -C $(MYFUNC_DIR) -f Makefile.bd_top.mk all</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="editing-vivado-projects">
+<h3>Editing Vivado Projects<a class="headerlink" href="#editing-vivado-projects" title="Link to this heading">¶</a></h3>
+<p>Create a Vivado project of the existing configuration as the basis for the function block replacement. See the <a class="reference external" href="../../IMPLEMENT.md#BuildEnvironment">“Build Environment” section of the build instructions</a> for the Vivado tools version.</p>
+<ol class="arabic">
+<li><p>Go to <code class="code docutils literal notranslate"><span class="pre">$workdir/hardware-design/example-design/script/</span></code> and run the project generation command.</p>
+<blockquote>
+<div><div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span><span class="nv">$workdir</span>/hardware-design/example-design/script/
+make<span class="w"> </span>build-design
+</pre></div>
+</div>
+<p>The file <code class="code docutils literal notranslate"><span class="pre">project_1/</span></code> is generated under the current directory.</p>
+</div></blockquote>
+</li>
+<li><p>Go to <code class="code docutils literal notranslate"><span class="pre">project_1/</span></code> generated above and open the Vivado project.</p>
+<blockquote>
+<div><div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>project_1
+vivado<span class="w"> </span>project_1.xpr
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>Open Block Design from Flow Navigator &gt; IP INTEGRATOR &gt; Open Block Design.</p>
+<blockquote>
+<div><img alt="_images/vivado_open_block_design.png" src="_images/vivado_open_block_design.png" />
+</div></blockquote>
+</li>
+<li><p>Delete the replacement original function block ( <code class="code docutils literal notranslate"><span class="pre">function_0</span></code>, <cite>function_1</cite>) and <code class="code docutils literal notranslate"><span class="pre">Xlconcat_2</span></code> from Block Design. ※ <code class="code docutils literal notranslate"><span class="pre">Xlconcat_2</span></code> bundles the <code class="code docutils literal notranslate"><span class="pre">decouple</span> <span class="pre">status</span></code> of <code class="code docutils literal notranslate"><span class="pre">function_0/1</span></code> and is not used in the implementation sample.</p>
+<blockquote>
+<div><img alt="_images/vivado_del_func.png" src="_images/vivado_del_func.png" />
+</div></blockquote>
+</li>
+<li><p>Add myfunc to Block Design with “Add Module” (for RTL) or “Add IP” (for high-level synthesis).</p>
+<blockquote>
+<div><img alt="_images/vivado_add_module.png" src="_images/vivado_add_module.png" />
+</div></blockquote>
+</li>
+<li><p>Prepare a connection script to connect the terminals of the added function block to the surrounding blocks. Replace <code class="code docutils literal notranslate"><span class="pre">function_0/1</span></code> in the script with the instance name of the newly placed function block.</p>
+<blockquote>
+<div><div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>cp<span class="w"> </span><span class="nv">$workdir</span>/hardware-design/example-design/script/impl/function_connect_conf1.tcl<span class="w"> </span>.
+sed<span class="w"> </span>-i<span class="w"> </span>function_connect_conf1.tcl<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;s/function_0/myfunc_0/g&quot;</span>
+sed<span class="w"> </span>-i<span class="w"> </span>function_connect_conf1.tcl<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;s/function_1/myfunc_1/g&quot;</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>Select the Tcl Console tab and perform the connection using the above script.</p>
+<blockquote>
+<div><img alt="_images/vivado_source_connect_conf.png" src="_images/vivado_source_connect_conf.png" />
+</div></blockquote>
+</li>
+<li><p>Save the Block Design with <code class="code docutils literal notranslate"><span class="pre">Ctrl</span> <span class="pre">+</span> <span class="pre">S</span></code>.</p></li>
+<li><p>Export the Block Design to a TCL script for build automation. Execute the following command in the Tcl Console.</p>
+<blockquote>
+<div><div class="highlight-tcl notranslate"><div class="highlight"><pre><span></span><span class="nv">write_bd_tcl</span><span class="w"> </span><span class="o">-</span>force<span class="w"> </span>tmp.tcl
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>Quit Vivado.</p></li>
+<li><p>If you use <code class="code docutils literal notranslate"><span class="pre">tmp.tcl</span></code> as it was created above, you will get an error, so fix it. Comment out or delete the following lines.</p>
+<ul class="simple">
+<li><p>address configuration: <code class="code docutils literal notranslate"><span class="pre">assign_bd_address</span> <span class="pre">***</span></code></p></li>
+<li><p>validate design: <code class="code docutils literal notranslate"><span class="pre">validate_bd_design</span></code></p></li>
+</ul>
+</li>
+<li><p>Overwrite the modified Tcl script to <code class="code docutils literal notranslate"><span class="pre">$workdir/hardware-design/example-design/script/impl/bd_design_conf1.tcl</span></code>.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>cp<span class="w"> </span>tmp.tcl<span class="w"> </span>../impl/function_connect_conf1.tcl
+</pre></div>
+</div>
+</li>
+<li><p>Modify the address mapping to allow register access for the replaced function block. In　<code class="code docutils literal notranslate"><span class="pre">$workdir/hardware-design/example-design/script/impl/bd_address_conf1.csv</span></code>, replace　<code class="code docutils literal notranslate"><span class="pre">function0/1</span></code> with the instance name/terminal name from　<code class="code docutils literal notranslate"><span class="pre">myfunc</span></code> that you added to Block Design. If there is a change to the address map, change it to the address you want to set to <code class="code docutils literal notranslate"><span class="pre">myfunc</span></code>.</p>
+<ul>
+<li><p>Parts to be corrected</p>
+<blockquote>
+<div><div class="highlight-tcl notranslate"><div class="highlight"><pre><span></span><span class="nv">SEG_axi4l_decoupler_conv_reg0_1</span>,<span class="o">/</span>axis2axi_bridge_0<span class="o">/</span>m_axi,<span class="o">/</span>function_0<span class="o">/</span>axi4l_decoupler_conv<span class="o">/</span>s_axi<span class="o">/</span>reg0,0x24000,1K
+<span class="nv">SEG_axi4l_decoupler_conv_reg0</span>,<span class="o">/</span>axis2axi_bridge_0<span class="o">/</span>m_axi,<span class="o">/</span>function_1<span class="o">/</span>axi4l_decoupler_conv<span class="o">/</span>s_axi<span class="o">/</span>reg0,0x24400,1K
+<span class="nv">SEG_axi4l_decoupler_filter_reg0_1</span>,<span class="o">/</span>axis2axi_bridge_0<span class="o">/</span>m_axi,<span class="o">/</span>function_0<span class="o">/</span>axi4l_decoupler_filter<span class="o">/</span>s_axi<span class="o">/</span>reg0,0x25000,1K
+<span class="nv">SEG_axi4l_decoupler_filter_reg0</span>,<span class="o">/</span>axis2axi_bridge_0<span class="o">/</span>m_axi,<span class="o">/</span>function_1<span class="o">/</span>axi4l_decoupler_filter<span class="o">/</span>s_axi<span class="o">/</span>reg0,0x26000,1K
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>Parts to be deleted</p>
+<blockquote>
+<div><div class="highlight-tcl notranslate"><div class="highlight"><pre><span></span><span class="c"># Assignments in Address Space /function_0/axi4l_decoupler_conv/m_axi</span>
+<span class="c">#</span>
+<span class="nv">SEG_conversion_ada_0_reg0</span>,<span class="o">/</span>function_0<span class="o">/</span>axi4l_decoupler_conv<span class="o">/</span>m_axi,<span class="o">/</span>function_0<span class="o">/</span>conversion_ada_0<span class="o">/</span>s_axi_control<span class="o">/</span>reg0,0x000,1K
+<span class="c">#</span>
+<span class="c"># Assignments in Address Space /function_0/axi4l_decoupler_filter/m_axi</span>
+<span class="c">#</span>
+<span class="nv">SEG_filter_resize_0_reg0</span>,<span class="o">/</span>function_0<span class="o">/</span>axi4l_decoupler_filter<span class="o">/</span>m_axi,<span class="o">/</span>function_0<span class="o">/</span>filter_resize_0<span class="o">/</span>s_axi_control<span class="o">/</span>reg0,0x000,1K
+<span class="c">#</span>
+<span class="c"># Assignments in Address Space /function_0/conversion_ada_0/m_axi_ingr_frame_buffer</span>
+<span class="c">#</span>
+<span class="nv">SEG_ddr4_1_C0_DDR4_ADDRESS_BLOCK</span>,<span class="o">/</span>function_0<span class="o">/</span>conversion_ada_0<span class="o">/</span>m_axi_ingr_frame_buffer,<span class="o">/</span>ddr4_1<span class="o">/</span>C0_DDR4_MEMORY_MAP<span class="o">/</span>C0_DDR4_ADDRESS_BLOCK,0x400000000,16G
+<span class="c">#</span>
+<span class="c"># Assignments in Address Space /function_1/axi4l_decoupler_conv/m_axi</span>
+<span class="c">#</span>
+<span class="nv">SEG_conversion_ada_0_reg0</span>,<span class="o">/</span>function_1<span class="o">/</span>axi4l_decoupler_conv<span class="o">/</span>m_axi,<span class="o">/</span>function_1<span class="o">/</span>conversion_ada_0<span class="o">/</span>s_axi_control<span class="o">/</span>reg0,0x000,1K
+<span class="c">#</span>
+<span class="c"># Assignments in Address Space /function_1/axi4l_decoupler_filter/m_axi</span>
+<span class="c">#</span>
+<span class="nv">SEG_filter_resize_0_reg0</span>,<span class="o">/</span>function_1<span class="o">/</span>axi4l_decoupler_filter<span class="o">/</span>m_axi,<span class="o">/</span>function_1<span class="o">/</span>filter_resize_0<span class="o">/</span>s_axi_control<span class="o">/</span>reg0,0x000,1K
+<span class="c">#</span>
+<span class="c"># Assignments in Address Space /function_1/conversion_ada_0/m_axi_ingr_frame_buffer</span>
+<span class="c">#</span>
+<span class="nv">SEG_ddr4_1_C0_DDR4_ADDRESS_BLOCK</span>,<span class="o">/</span>function_1<span class="o">/</span>conversion_ada_0<span class="o">/</span>m_axi_ingr_frame_buffer,<span class="o">/</span>ddr4_1<span class="o">/</span>C0_DDR4_MEMORY_MAP<span class="o">/</span>C0_DDR4_ADDRESS_BLOCK,0x400000000,16G
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+</ul>
+</li>
+<li><p>Run the build and generate the Bitstream.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span><span class="nv">$workdir</span>/hardware-design/example-design/script/
+make<span class="w"> </span>run-impl
+</pre></div>
+</div>
+</li>
+</ol>
+</section>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="#">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Function Block Development Guidelines</a><ul>
+<li><a class="reference internal" href="#purpose-and-positioning-of-this-document">Purpose and positioning of this document</a><ul>
+<li><a class="reference internal" href="#purpose">Purpose</a></li>
+<li><a class="reference internal" href="#function-block-development-flow">Function block development flow</a></li>
+<li><a class="reference internal" href="#fpga-card-specifications">FPGA Card Specifications</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#configuring-the-implementation-sample">Configuring the Implementation Sample</a><ul>
+<li><a class="reference internal" href="#chain-control">Chain Control</a></li>
+<li><a class="reference internal" href="#lldma-low-latency-direct-device-memory-access">LLDMA (Low-Latency direct Device Memory Access)</a></li>
+<li><a class="reference internal" href="#network-terminator">Network Terminator</a></li>
+<li><a class="reference internal" href="#direct-transfer-adapter">Direct Transfer Adapter</a></li>
+<li><a class="reference internal" href="#function-conversion-adapter-filter-resize">Function (Conversion Adapter/Filter Resize)</a></li>
+<li><a class="reference internal" href="#other-blocks">Other Blocks</a></li>
+<li><a class="reference internal" href="#clock-reset-type">Clock/Reset type</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#function-block-interface-specification">Function Block Interface Specification</a><ul>
+<li><a class="reference internal" href="#clock-input-aclk-mm">Clock input (aclk_mm)</a></li>
+<li><a class="reference internal" href="#reset-input-aresetn-mm-filter-conv">Reset input (aresetn_mm_filter/conv)</a></li>
+<li><a class="reference internal" href="#ingress-transport-interface-axis-ingr-req-resp-data">Ingress transport interface (axis_ingr_req/resp/data)</a></li>
+<li><a class="reference internal" href="#egress-forwarding-interface-axis-egr-req-resp-data">Egress forwarding interface (axis_egr_req/resp/data)</a></li>
+<li><a class="reference internal" href="#ddr-access-interface-m-axi-conv">DDR Access Interface (m_axi_conv)</a></li>
+<li><a class="reference internal" href="#register-access-interface-s-axi-control-func-conv">Register access interface (s_axi_control_func/conv)</a></li>
+<li><a class="reference internal" href="#failure-detection-notification-detect-fault-filter-conv">Failure Detection Notification (detect_fault_filter/conv)</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#protocol-for-transferring-data-between-blocks">Protocol for transferring data between blocks</a><ul>
+<li><a class="reference internal" href="#relationship-between-dataframes-and-transactions">Relationship between DataFrames and Transactions</a></li>
+<li><a class="reference internal" href="#req-resp">req / resp</a></li>
+<li><a class="reference internal" href="#data">data</a></li>
+<li><a class="reference internal" href="#timing">Timing</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#filter-resize-function-block-specification">Filter Resize Function Block Specification</a><ul>
+<li><a class="reference internal" href="#conversion-adapter">Conversion Adapter</a></li>
+<li><a class="reference internal" href="#filter-resize">Filter Resize</a></li>
+<li><a class="reference internal" href="#function-block-register-map">Function block register map</a><ul>
+<li><a class="reference internal" href="#id7">Conversion Adapter</a></li>
+<li><a class="reference internal" href="#id10">Filter Resize</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#resource-information">Resource Information</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#design-of-a-new-function-block">Design of a new function block</a><ul>
+<li><a class="reference internal" href="#directory-configuration">Directory Configuration</a></li>
+<li><a class="reference internal" href="#edit-build-script">Edit Build Script</a><ul>
+<li><a class="reference internal" href="#add-hdl-source-file">Add HDL Source File</a></li>
+<li><a class="reference internal" href="#add-high-level-synthesis-build-commands">Add high-level synthesis build commands</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#editing-vivado-projects">Editing Vivado Projects</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >Index</a></li>
+        <li class="nav-item nav-item-0"><a href="#">OpenKasugai Hardware 2024.11.18 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Function Block Development Guidelines</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.0.2.
+    </div>
+  </body>
+</html>

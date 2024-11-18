@@ -1,0 +1,13 @@
+--- tmp_Vitis_Libraries/vision/L1/include/imgproc/xf_resize_nn_bilinear.hpp	2024-08-03 03:44:06.495407137 +0900
++++ ../../src/hls/common/include/imgproc/xf_resize_nn_bilinear.hpp	2024-08-03 03:43:19.619408223 +0900
+@@ -273,8 +273,8 @@ template <int SRC_TYPE,
+           int OUTWIDTH,
+           int INTERPOLATION_TYPE,
+           int MAX_DOWN_SCALE>
+-void resizeNNBilinear(xf::cv::Mat<SRC_TYPE, INHEIGHT, INWIDTH, NPPC>& imgInput,
+-                      xf::cv::Mat<SRC_TYPE, OUTHEIGHT, OUTWIDTH, NPPC>& imgOutput) {
++void resizeNNBilinear(xf::cv::Mat<SRC_TYPE, INHEIGHT, INWIDTH, NPPC, 2>& imgInput,
++                      xf::cv::Mat<SRC_TYPE, OUTHEIGHT, OUTWIDTH, NPPC, 2>& imgOutput) {
+     const int INDEX_INT = 17;
+     const int WEIGHT_WIDTH = 48;
+     const int WEIGHT_INT = 16;

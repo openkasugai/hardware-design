@@ -1,0 +1,14 @@
+NOTICES
+
+This repository incorporates material as listed below or described in the code.
+
+License notice
+----------------------------------------------------
+Copyright 2024 NTT Corporation, FUJITSU LIMITED
+Licensed under the Apache License, Version 2.0, see LICENSE for details.
+SPDX-License-Identifier: Apache-2.0
+
+The attribution notice
+----------------------------------------------------
+This product includes Hardware Description Language(HDL) developed at
+"OpenKasugai-hardware-design" (https://github.com/openkasugai/hardware-design).

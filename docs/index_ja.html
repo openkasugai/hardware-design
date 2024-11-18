@@ -1,0 +1,1417 @@
+
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>ファンクションブロック開発ガイドライン &#8212; OpenKasugai Hardware 2024.11.18 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=649a27d8" />
+    <link rel="stylesheet" type="text/css" href="_static/bizstyle.css?v=658d757c" />
+    
+    <script src="_static/documentation_options.js?v=cc5a0791"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <!--[if lt IE 9]>
+    <script src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="nav-item nav-item-0"><a href="index.html">OpenKasugai Hardware 2024.11.18 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">ファンクションブロック開発ガイドライン</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="id1">
+<h1>ファンクションブロック開発ガイドライン<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h1>
+<div class="toctree-wrapper compound">
+</div>
+<section id="id2">
+<h2>本資料の目的と位置づけ<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h2>
+<section id="id3">
+<h3>目的<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h3>
+<p>本書は、ファンクションブロックを開発する技術者に対して、実装サンプルの基本仕様と、ファンクションブロックのビルド手順を提供します。</p>
+</section>
+<section id="id4">
+<h3>ファンクションブロック開発フロー<a class="headerlink" href="#id4" title="Link to this heading">¶</a></h3>
+<ol class="arabic simple">
+<li><p>後述の <a class="reference external" href="#func-intf-spec">ファンクションブロックインタフェース</a> 仕様に基づいてファンクションブロックを設計・実装します。</p></li>
+<li><p>ビルドスクリプト等を変更し、実装サンプルの既存ファンクションブロックを新しいファンクションブロックに置き換えます。</p></li>
+<li><p>FPGA Bitstreamのビルドを実行します。</p></li>
+</ol>
+</section>
+<section id="fpga">
+<h3>FPGAカード諸元<a class="headerlink" href="#fpga" title="Link to this heading">¶</a></h3>
+<p>実装サンプルを設計した際に使用した FPGAカードの諸元を示します。詳細は <a class="reference external" href="https://www.amd.com/ja/products/accelerators/alveo/u250/a-u250-a64g-pq-g.html">デバイスベンダのサイト</a> を参照してください。</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>項目</p></th>
+<th class="head"><p>内容</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>使用FPGA</p></td>
+<td><p>Xilinx Ultrascale+ XCU250-FIGD2104-2L-e</p></td>
+</tr>
+<tr class="row-odd"><td><p>搭載 Board</p></td>
+<td><p>Alveo U250 (PCI card)</p></td>
+</tr>
+<tr class="row-even"><td><p>動作周波数</p></td>
+<td><p>50MHz / 100MHz / 150MHz / 200MHz / 250MHz / 300MHz</p></td>
+</tr>
+<tr class="row-odd"><td><p>外部インタフェース</p></td>
+<td><p>PCIe Gen3 x16 / QSFP28 / DDR4 / UART / GPIO</p></td>
+</tr>
+<tr class="row-even"><td><p>入力クロック</p></td>
+<td><p>100MHz / 161MHz / 300MHz</p></td>
+</tr>
+<tr class="row-odd"><td><p>コンフィグレーション</p></td>
+<td><p>Flash ROM 書き込み、USB 書き込み、PCI 書き込み (Tandem PCIe)</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="id7">
+<h2>実装サンプルの構成<a class="headerlink" href="#id7" title="Link to this heading">¶</a></h2>
+<p>実装サンプルのブロック構成を示します。赤くハッチングされた領域が新たなファンクションブロックと置き換えられる領域です。</p>
+<img alt="_images/block_diagram_func.png" src="_images/block_diagram_func.png" />
+<section id="chain-control">
+<h3>Chain Control<a class="headerlink" href="#chain-control" title="Link to this heading">¶</a></h3>
+<p>ファンクションチェインのデータ転送機能を実現します。外部IFの論理的接続(コネクション)と FPGA内の論理的接続(ファンクションチャネル)の間の紐付け (ID変換) とデータ転送を行います。</p>
+</section>
+<section id="lldma-low-latency-direct-device-memory-access">
+<h3>LLDMA (Low-Latency direct Device Memory Access)<a class="headerlink" href="#lldma-low-latency-direct-device-memory-access" title="Link to this heading">¶</a></h3>
+<p>ホストとFPGAカード間の転送の他、ホストのCPU処理を介さずにFPGAカード間で直接データ転送する機能（D2D）を提供します。</p>
+</section>
+<section id="network-terminator">
+<h3>Network Terminator<a class="headerlink" href="#network-terminator" title="Link to this heading">¶</a></h3>
+<p>Ethernetによる外部インタフェース機能を提供します。</p>
+<p>NW終端機能は実装サンプルでは未搭載です。本機能については <a class="reference external" href="../../README_ja.md#nw終端機能について">“READMEのNW終端機能について</a>.を参照してください。</p>
+</section>
+<section id="direct-transfer-adapter">
+<h3>Direct Transfer Adapter<a class="headerlink" href="#direct-transfer-adapter" title="Link to this heading">¶</a></h3>
+<p>ファンクションブロックをバイパスし、チェイン制御のIngressからEgressへの直接の転送を可能にします。</p>
+</section>
+<section id="function-conversion-adapter-filter-resize">
+<h3>Function (Conversion Adapter/Filter Resize)<a class="headerlink" href="#function-conversion-adapter-filter-resize" title="Link to this heading">¶</a></h3>
+<p>実装サンプルでは画像処理機能を提供します。変換アダプタブロックとフィルタリサイズブロックから構成されます。</p>
+<ul class="simple">
+<li><p>変換アダプタブロック: データフレームのバッファリングと画像処理タスクの振り分けを行います。</p></li>
+<li><p>フィルタリサイズブロック: 振り分けられた画像処理タスク（5x5メディアンフィルタとリサイズ）の並列実行を可能とします。</p></li>
+</ul>
+</section>
+<section id="id8">
+<h3>その他のブロック<a class="headerlink" href="#id8" title="Link to this heading">¶</a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>ブロック名</p></th>
+<th class="head"><p>説明</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>PCIe Interface</p></td>
+<td><p>PCI Express x16 バスを終端するハードIP。</p></td>
+</tr>
+<tr class="row-odd"><td><p>MIG</p></td>
+<td><p>Memory Interface Generator。ALVEO カード上の DDR SDRAM にアクセスするためのインタフェースを提供します。</p></td>
+</tr>
+<tr class="row-even"><td><p>AXIS to AXI bridge</p></td>
+<td><p>PCI Express からのレジスタアクセスを AXI4-Stream から FPGA 内部で使用する AXI4-Lite プロトコルに変換します。</p></td>
+</tr>
+<tr class="row-odd"><td><p>CMS</p></td>
+<td><p>Card Management System。ALVEO カードの電力情報や温度情報を取得します。</p></td>
+</tr>
+<tr class="row-even"><td><p>Global Registers</p></td>
+<td><p>実装サンプル全体の制御や監視に関わるレジスタ群を提供します。</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="clock-reset">
+<h3>Clock/Reset 系<a class="headerlink" href="#clock-reset" title="Link to this heading">¶</a></h3>
+<p>以下に、実装サンプルの Clock/Reset 系を示します。</p>
+<img alt="_images/example_clock_struct.png" src="_images/example_clock_struct.png" />
+</section>
+</section>
+<section id="func-intf-spec">
+<span id="id9"></span><h2>ファンクションブロックインタフェース仕様<a class="headerlink" href="#func-intf-spec" title="Link to this heading">¶</a></h2>
+<p>以下に、ファンクションブロックが満たすべきインタフェースの仕様を示します。</p>
+<img alt="_images/inter_block_intf_func.png" src="_images/inter_block_intf_func.png" />
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>信号名 / バス名</p></th>
+<th class="head"><p>I/Oタイプ <a class="footnote-reference brackets" href="#id11" id="id10" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a></p></th>
+<th class="head"><p>幅</p></th>
+<th class="head"><p>接続先ブロック</p></th>
+<th class="head"><p>機能説明</p></th>
+<th class="head"><p>要否</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>aclk_mm</p></td>
+<td><p>input</p></td>
+<td><p>1</p></td>
+<td><p>Clocking Wizard</p></td>
+<td><p>200 MHz クロック</p></td>
+<td><p>必須</p></td>
+</tr>
+<tr class="row-odd"><td><p>aresetn_mm_filter</p></td>
+<td><p>input</p></td>
+<td><p>1</p></td>
+<td><p>Processor System Reset</p></td>
+<td><p>サブブロック0 リセット (aclk_mm同期、負論理)</p></td>
+<td><p>必須</p></td>
+</tr>
+<tr class="row-even"><td><p>aresetn_mm_conv</p></td>
+<td><p>input</p></td>
+<td><p>1</p></td>
+<td><p>Processor System Reset</p></td>
+<td><p>サブブロック1 リセット (aclk_mm同期、負論理)</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>s_axis_ingr_req</p></td>
+<td><p>AXIS Slave</p></td>
+<td><p>64</p></td>
+<td><p>直接転送アダプタ</p></td>
+<td><p>Ingress転送要求</p></td>
+<td><p>必須</p></td>
+</tr>
+<tr class="row-even"><td><p>m_axis_ingr_resp</p></td>
+<td><p>AXIS Master</p></td>
+<td><p>64</p></td>
+<td><p>直接転送アダプタ</p></td>
+<td><p>Ingress転送応答</p></td>
+<td><p>必須</p></td>
+</tr>
+<tr class="row-odd"><td><p>s_axis_ingr_data</p></td>
+<td><p>AXIS Slave</p></td>
+<td><p>512</p></td>
+<td><p>直接転送アダプタ</p></td>
+<td><p>Ingress転送データストリーム</p></td>
+<td><p>必須</p></td>
+</tr>
+<tr class="row-even"><td><p>m_axis_egr_req</p></td>
+<td><p>AXIS Master</p></td>
+<td><p>64</p></td>
+<td><p>直接転送アダプタ</p></td>
+<td><p>Egress転送要求</p></td>
+<td><p>必須</p></td>
+</tr>
+<tr class="row-odd"><td><p>s_axis_egr_resp</p></td>
+<td><p>AXIS Slave</p></td>
+<td><p>64</p></td>
+<td><p>直接転送アダプタ</p></td>
+<td><p>Egress転送応答</p></td>
+<td><p>必須</p></td>
+</tr>
+<tr class="row-even"><td><p>m_axis_egr_data</p></td>
+<td><p>AXIS Master</p></td>
+<td><p>512</p></td>
+<td><p>直接転送アダプタ</p></td>
+<td><p>Egress転送データストリーム</p></td>
+<td><p>必須</p></td>
+</tr>
+<tr class="row-odd"><td><p>m_axi_conv</p></td>
+<td><p>AXI4 Master</p></td>
+<td><p>512</p></td>
+<td><p>AXI Interconnect</p></td>
+<td><p>DDR アクセスバス</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>s_axi_control_func</p></td>
+<td><p>AXIL Slave</p></td>
+<td><p>32</p></td>
+<td><p>AXI Interconnect</p></td>
+<td><p>サブブロック0 レジスタアクセスバス</p></td>
+<td><p>必須</p></td>
+</tr>
+<tr class="row-odd"><td><p>s_axi_control_conv</p></td>
+<td><p>AXIL Slave</p></td>
+<td><p>32</p></td>
+<td><p>AXI Interconnect</p></td>
+<td><p>サブブロック1 レジスタアクセスバス</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>detect_fault_filter</p></td>
+<td><p>output</p></td>
+<td><p>1</p></td>
+<td><p>グローバルレジスタ</p></td>
+<td><p>サブブロック0 障害検出通知 (正論理、レベル)</p></td>
+<td><p>必須</p></td>
+</tr>
+<tr class="row-odd"><td><p>detect_fault_conv</p></td>
+<td><p>output</p></td>
+<td><p>1</p></td>
+<td><p>グローバルレジスタ</p></td>
+<td><p>サブブロック1 障害検出通知 (正論理、レベル)</p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<aside class="footnote-list brackets">
+<aside class="footnote brackets" id="id11" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id10">1</a><span class="fn-bracket">]</span></span>
+<p><code class="code docutils literal notranslate"><span class="pre">AXIS</span></code> : AXI4-Stream / <code class="code docutils literal notranslate"><span class="pre">AXIL</span></code> : AXI4-Lite</p>
+</aside>
+</aside>
+<section id="aclk-mm">
+<h3>クロック入力 (aclk_mm)<a class="headerlink" href="#aclk-mm" title="Link to this heading">¶</a></h3>
+<p>実装サンプルでは Clocking Wizard IP で生成された 200 MHz のクロック(<code class="code docutils literal notranslate"><span class="pre">clk_pcie200</span></code>)を接続する想定になっており、その他のインタフェース (リセット、AXIバス、障害検出通知) も全てこれに同期しています。</p>
+</section>
+<section id="aresetn-mm-filter-conv">
+<h3>リセット入力 (aresetn_mm_filter/conv)<a class="headerlink" href="#aresetn-mm-filter-conv" title="Link to this heading">¶</a></h3>
+<p>実装サンプルではファンクションブロックのリセットのために 2系統のリセット入力が用意されています。これは実装サンプルにおいてファンクションブロック内に 2つのサブブロックが含まれ、これらを個別にリセットできるようにするためです。</p>
+<p>ファンクションブロック内が 1つのブロックのみで構成される場合は 2つ目のブロック用のリセット(<code class="code docutils literal notranslate"><span class="pre">aresetn_mm_conv</span></code>)は未接続にすることができます。</p>
+</section>
+<section id="ingress-axis-ingr-req-resp-data">
+<h3>Ingress 転送インタフェース (axis_ingr_req/resp/data)<a class="headerlink" href="#ingress-axis-ingr-req-resp-data" title="Link to this heading">¶</a></h3>
+<p>Ingress 側のデータフレーム転送のためのインタフェースです。3つの AXI4-Stream インタフェース(req/resp/data) から構成されます。プロトコルは後述します。</p>
+</section>
+<section id="egress-axis-egr-req-resp-data">
+<h3>Egress 転送インタフェース (axis_egr_req/resp/data)<a class="headerlink" href="#egress-axis-egr-req-resp-data" title="Link to this heading">¶</a></h3>
+<p>Egress 側のデータフレーム転送のためのインタフェースです。3つの AXI4-Stream インタフェース(req/resp/data) から構成されます。プロトコルは後述します。</p>
+</section>
+<section id="ddr-m-axi-conv">
+<h3>DDR アクセスインタフェース (m_axi_conv)<a class="headerlink" href="#ddr-m-axi-conv" title="Link to this heading">¶</a></h3>
+<p>ALVEO カード上の DDR4 SDRAM にアクセスするための AXI4 (Memory Mapped) インタフェースです。実装サンプルでは Ingress 側のフレームバッファリングのために使用されます。ファンクションブロックの機能によって DDR へのバッファリングを必要としない場合は未接続にすることができます。</p>
+</section>
+<section id="s-axi-control-func-conv">
+<h3>レジスタアクセスインタフェース (s_axi_control_func/conv)<a class="headerlink" href="#s-axi-control-func-conv" title="Link to this heading">¶</a></h3>
+<p>ファンクションブロックを制御するためのレジスタアクセスインタフェースです。実装サンプルではファンクションブロック内に 2つのサブブロックが含まれるため、それぞれのためにインタフェースが用意されています。</p>
+<p>ファンクションブロック内部が 1つのブロックのみで構成される場合は 2つ目のブロック用のインタフェース(<code class="code docutils literal notranslate"><span class="pre">s_axi_control_conv</span></code>)は未接続にすることができます。</p>
+</section>
+<section id="detect-fault-filter-conv">
+<h3>障害検出通知 (detect_fault_filter/conv)<a class="headerlink" href="#detect-fault-filter-conv" title="Link to this heading">¶</a></h3>
+<p>ファンクションブロック内で検出された障害をグローバルレジスタへ通知するためのインタフェースです。実装サンプルではブロック内に 2つのサブブロックが含まれるため、それぞれのためにインタフェースが用意されています。</p>
+<p>Read Clear 実装された障害検出レジスタの全てのビットを OR結合した結果を出力する、正論理のレベル信号です。</p>
+<p>ファンクションブロック内部が 1つのブロックのみで構成される場合は 2つ目のブロック用のインタフェース(<code class="code docutils literal notranslate"><span class="pre">detect_fault_conv</span></code>)はゼロ固定出力にすることができます。</p>
+</section>
+</section>
+<section id="id12">
+<h2>ブロック間のデータ転送プロトコル<a class="headerlink" href="#id12" title="Link to this heading">¶</a></h2>
+<p>データフレームの転送に用いるブロック間のインタフェースを示します。このインタフェースは 3 つの AXI4-Stream から構成されます。送信側のブロックを Source Block、受信側のブロックを Sink Block としています。Ingress 転送インタフェースであれば、直接転送アダプタブロックが Source Block、ファンクションブロックが Sink Block となり、Egress 転送インタフェースであれば、ファンクションブロックが Source Block、直接転送アダプタブロックが Sink Block となります。</p>
+<img alt="_images/inter_block_intf.png" src="_images/inter_block_intf.png" />
+<section id="id13">
+<h3>データフレームとトランザクションの関係<a class="headerlink" href="#id13" title="Link to this heading">¶</a></h3>
+<p>データフレームは 1 つの演算タスクで入出力されるデータ全体を指します。例えば画像処理タスクでは、データフレームは 1 枚の画像フレーム全体であることが想定されます。</p>
+<p>ブロック間でデータを転送する際、大きなデータフレームを一括して転送するとバスが長時間占有され、ファンクションチャネル間でデッドロックが発生する可能性があります。そこで本プロトコルではデータフレームを最大 32 kByte のトランザクションに分割して転送します。</p>
+<p>データフレームの先頭を含むトランザクションには Start of Frame (SOF) フラグと、そのデータフレーム全体の長さの情報が付与されます。データフレームの末尾を含むトランザクションには End of Frame (EOF) フラグが付与されます。</p>
+<p>1 つのトランザクションに複数のデータフレームを混在させることはできません。</p>
+</section>
+<section id="req-resp">
+<h3>req / resp<a class="headerlink" href="#req-resp" title="Link to this heading">¶</a></h3>
+<p>Source と Sink の間で転送するトランザクションのデータ長を決定するための 64 bit 幅の制御用バスです。トランザクション毎に以下の構造体を 1 cycle で転送します。</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>フィールド名</p></th>
+<th class="head"><p>ビットレンジ</p></th>
+<th class="head"><p>説明</p></th>
+<th class="head"><p>値域</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>frame_length</p></td>
+<td><p>[31:0]</p></td>
+<td><p>データフレーム長（バイト単位、SOF時のみ有効）</p></td>
+<td><p>1～4,294,967,295</p></td>
+</tr>
+<tr class="row-odd"><td><p>channel</p></td>
+<td><p>[40:32]</p></td>
+<td><p>ファンクションチャネルID</p></td>
+<td><p>0～511 <a class="footnote-reference brackets" href="#id16" id="id14" role="doc-noteref"><span class="fn-bracket">[</span>2<span class="fn-bracket">]</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p>sof</p></td>
+<td><p>[41]</p></td>
+<td><p>SOFフラグ（1 のとき、トランザクションデータの先頭がデータフレームの先頭）</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>eof</p></td>
+<td><p>[42]</p></td>
+<td><p>EOFフラグ（1 のとき、トランザクションデータの末尾がデータフレームの末尾）</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>direct</p></td>
+<td><p>[43]</p></td>
+<td><p>直接転送指示ビット。ファンクションブロックでは使用しません。</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>(reserved)</p></td>
+<td><p>[47:44]</p></td>
+<td><p>予約</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>burst_length</p></td>
+<td><p>[63:48]</p></td>
+<td><p>トランザクションデータ長（バイト単位、最大 32768 Bytes）</p></td>
+<td><p>0～32,768 <a class="footnote-reference brackets" href="#id17" id="id15" role="doc-noteref"><span class="fn-bracket">[</span>3<span class="fn-bracket">]</span></a></p></td>
+</tr>
+</tbody>
+</table>
+<aside class="footnote-list brackets">
+<aside class="footnote brackets" id="id16" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id14">2</a><span class="fn-bracket">]</span></span>
+<p>プロトコル上で使用可能な最大範囲。実際に使用可能な値はファンクションブロックに依存します。</p>
+</aside>
+<aside class="footnote brackets" id="id17" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id15">3</a><span class="fn-bracket">]</span></span>
+<p>1 ≦ req.burst_length ≦ 32768, 0 ≦ resp.burst_length ≦ req.burst_length</p>
+</aside>
+</aside>
+<p>req の burst_length は Source Block が転送可能なトランザクションデータ長を示します。resp の burst_length は Sink Block が受け取ることが可能なトランザクションデータ長を示します。resp の burst_length は req の burst_length を超えてはいけません。Sink Block がバッファフルなどのためにトランザクションデータを 1 Byte も受け取ることができない場合、resp の burst_length を 0 にすることができます。</p>
+</section>
+<section id="data">
+<h3>data<a class="headerlink" href="#data" title="Link to this heading">¶</a></h3>
+<p>req / resp のやりとりで決定されたトランザクションデータ長に基づきブロック間のデータ転送を行うための 512 bit 幅のバスです。</p>
+<p>トランザクションデータ長は resp の burst_length の値に一致します。resp の burst_length が 0 の場合はブロック間のデータ転送を実施しません。</p>
+<p>トランザクションデータの先頭は 512 bit バスの LSB から開始します。トランザクションデータ長が 64 Bytes の倍数でない場合は、トランザクションデータの末尾のサイクルの残った領域末尾に無効データを付与します。</p>
+<p>以下に 0～257 の 258 Bytes のデータを 5サイクル で転送する場合のバイト順を示します。</p>
+<img alt="_images/inter_block_if_burst_format.png" src="_images/inter_block_if_burst_format.png" />
+</section>
+<section id="id18">
+<h3>タイミング<a class="headerlink" href="#id18" title="Link to this heading">¶</a></h3>
+<p>以下に req / resp / data の信号タイミングを示します。複数のファンクションチャネルのトランザクションを同一のブロック間データ転送インタフェースに重畳する場合は、 req / resp / data のチャネルの順序は in-order でなければなりません。</p>
+<img alt="_images/inter_block_timing.png" src="_images/inter_block_timing.png" />
+</section>
+</section>
+<section id="id19">
+<h2>フィルタリサイズファンクションブロック仕様<a class="headerlink" href="#id19" title="Link to this heading">¶</a></h2>
+<p>(★ブロッキング転送に関する記載(チュートリアルから参照))</p>
+<p>以下に、実装サンプルに実装されているフィルタリサイズファンクションブロックのブロック構成を示します。</p>
+<img alt="_images/block_diagram_func_detail.png" src="_images/block_diagram_func_detail.png" />
+<section id="conversion-adapter">
+<h3>Conversion Adapter<a class="headerlink" href="#conversion-adapter" title="Link to this heading">¶</a></h3>
+<p>実装サンプルのデータフレームに相当する画像データのバッファリングと、2つのフィルタリサイズ回路への画像データの振り分けを行うサブブロックです。</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>ブロック名</p></th>
+<th class="head"><p>説明</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>ch_seperation</p></td>
+<td><p>Direct Transfer Adapter からデータフレームを受け取り、DDR にバッファリングします。画像 1枚分のバッファリングが完了したものから順に Filter Resize へ転送します。</p></td>
+</tr>
+<tr class="row-odd"><td><p>ch_multiple</p></td>
+<td><p>2 つの Filter Resize からの画像処理結果の入力を調停し、受け取った画像処理結果を Direct Transfer Adapter へ転送します。</p></td>
+</tr>
+<tr class="row-even"><td><p>control_s_axi</p></td>
+<td><p>制御レジスタ群を提供します。</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="filter-resize">
+<h3>Filter Resize<a class="headerlink" href="#filter-resize" title="Link to this heading">¶</a></h3>
+<p>画像データに対しフィルタ処理とリサイズ処理を実施するサブブロックです。</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>ブロック名</p></th>
+<th class="head"><p>説明</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>data_in</p></td>
+<td><p>Conversion Adapter からデータフレームを受け取り、後段の filter_proc へ入力します。</p></td>
+</tr>
+<tr class="row-odd"><td><p>filter_proc</p></td>
+<td><p>data_in から画像データを受け取り、5x5 メディアンフィルタ処理を適用して resize_proc へ転送します。</p></td>
+</tr>
+<tr class="row-even"><td><p>resize_proc</p></td>
+<td><p>filter_proc から画像データを受け取り、リサイズ処理を適用します。補間アルゴリズムとして Bilinear を適用します。リサイズの結果を data_out へ転送します。</p></td>
+</tr>
+<tr class="row-odd"><td><p>data_out</p></td>
+<td><p>resize_proc から画像データを受け取り、Conversion Adapter へ出力します。</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id20">
+<h3>ファンクションブロックレジスタマップ<a class="headerlink" href="#id20" title="Link to this heading">¶</a></h3>
+<section id="id21">
+<h4>Conversion Adapter<a class="headerlink" href="#id21" title="Link to this heading">¶</a></h4>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Offset</p></th>
+<th class="head"><p>Name</p></th>
+<th class="head"><p>Type <a class="footnote-reference brackets" href="#id23" id="id22" role="doc-noteref"><span class="fn-bracket">[</span>4<span class="fn-bracket">]</span></a></p></th>
+<th class="head"><p>Initial Value</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>0x0000</p></td>
+<td><p>control</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0010</p></td>
+<td><p>module_id</p></td>
+<td><p>R</p></td>
+<td><p>0x0000F1C2</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0020</p></td>
+<td><p>local_version</p></td>
+<td><p>R</p></td>
+<td><p>(Version Number)</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0030</p></td>
+<td><p>m_axi_ingr_frame_buffer_l</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0034</p></td>
+<td><p>m_axi_ingr_frame_buffer_h</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0040</p></td>
+<td><p>rows_in</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0044</p></td>
+<td><p>cols_in</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0050</p></td>
+<td><p>stat_sel_channel</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0060</p></td>
+<td><p>stat_ingr_rcv_data_value_l</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0064</p></td>
+<td><p>stat_ingr_rcv_data_value_h</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0070</p></td>
+<td><p>stat_ingr_snd_data_0_value_l</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0074</p></td>
+<td><p>stat_ingr_snd_data_0_value_h</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0078</p></td>
+<td><p>stat_ingr_snd_data_1_value_l</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x007C</p></td>
+<td><p>stat_ingr_snd_data_1_value_h</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0080</p></td>
+<td><p>stat_egr_rcv_data_0_value_l</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0084</p></td>
+<td><p>stat_egr_rcv_data_0_value_h</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0088</p></td>
+<td><p>stat_egr_rcv_data_1_value_l</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x008C</p></td>
+<td><p>stat_egr_rcv_data_1_value_h</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0090</p></td>
+<td><p>stat_egr_snd_data_value_l</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0094</p></td>
+<td><p>stat_egr_snd_data_value_h</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0098</p></td>
+<td><p>stat_ingr_rcv_frame_value</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x00A0</p></td>
+<td><p>stat_ingr_snd_frame_0_value</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x00A4</p></td>
+<td><p>stat_ingr_snd_frame_1_value</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x00A8</p></td>
+<td><p>stat_egr_rcv_frame_0_value</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x00AC</p></td>
+<td><p>stat_egr_rcv_frame_1_value</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x00B0</p></td>
+<td><p>stat_egr_snd_frame_value</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x00C0</p></td>
+<td><p>stat_ingr_frame_buffer_overflow</p></td>
+<td><p>R/WC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x00C4</p></td>
+<td><p>stat_ingr_frame_buffer_usage</p></td>
+<td><p>R</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0100</p></td>
+<td><p>detect_fault</p></td>
+<td><p>R</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0110</p></td>
+<td><p>ingr_rcv_protocol_fault</p></td>
+<td><p>R/WC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0118</p></td>
+<td><p>ingr_rcv_protocol_fault_mask</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x011C</p></td>
+<td><p>ingr_rcv_protocol_fault_force</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0120</p></td>
+<td><p>ingr_snd_protocol_fault_0</p></td>
+<td><p>R/WC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0128</p></td>
+<td><p>ingr_snd_protocol_fault_0_mask</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x012C</p></td>
+<td><p>ingr_snd_protocol_fault_0_force</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0130</p></td>
+<td><p>ingr_snd_protocol_fault_1</p></td>
+<td><p>R/WC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0138</p></td>
+<td><p>ingr_snd_protocol_fault_1_mask</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x013C</p></td>
+<td><p>ingr_snd_protocol_fault_1_force</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0140</p></td>
+<td><p>egr_rcv_protocol_fault_0</p></td>
+<td><p>R/WC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0148</p></td>
+<td><p>egr_rcv_protocol_fault_0_mask</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x014C</p></td>
+<td><p>egr_rcv_protocol_fault_0_force</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0150</p></td>
+<td><p>egr_rcv_protocol_fault_1</p></td>
+<td><p>R/WC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0158</p></td>
+<td><p>egr_rcv_protocol_fault_1_mask</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x015C</p></td>
+<td><p>egr_rcv_protocol_fault_1_force</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0160</p></td>
+<td><p>egr_snd_protocol_fault</p></td>
+<td><p>R/WC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0168</p></td>
+<td><p>egr_snd_protocol_fault_mask</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x016C</p></td>
+<td><p>egr_snd_protocol_fault_force</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0170</p></td>
+<td><p>mem_parity_fault</p></td>
+<td><p>R/WC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0178</p></td>
+<td><p>mem_parity_fault_mask</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x017C</p></td>
+<td><p>mem_parity_fault_force</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0180</p></td>
+<td><p>ingr_rcv_length_fault</p></td>
+<td><p>R/WC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0188</p></td>
+<td><p>ingr_rcv_length_fault_mask</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x018C</p></td>
+<td><p>ingr_rcv_length_fault_force</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0190</p></td>
+<td><p>streamif_stall</p></td>
+<td><p>R</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0198</p></td>
+<td><p>streamif_stall_mask</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x019C</p></td>
+<td><p>streamif_stall_force</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x01C0</p></td>
+<td><p>ingr_rcv_insert_protocol_fault</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x01C4</p></td>
+<td><p>ingr_snd_insert_protocol_fault_0</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x01C8</p></td>
+<td><p>ingr_snd_insert_protocol_fault_1</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x01CC</p></td>
+<td><p>egr_rcv_insert_protocol_fault_0</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x01D0</p></td>
+<td><p>egr_rcv_insert_protocol_fault_1</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x01D4</p></td>
+<td><p>egr_snd_insert_protocol_fault</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x01D8</p></td>
+<td><p>insert_mem_parity_fault</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+</tbody>
+</table>
+<aside class="footnote-list brackets">
+<aside class="footnote brackets" id="id23" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id22">4</a><span class="fn-bracket">]</span></span>
+<p><code class="code docutils literal notranslate"><span class="pre">R/W</span></code>: Read Write / <code class="code docutils literal notranslate"><span class="pre">R</span></code>: Read Only / <code class="code docutils literal notranslate"><span class="pre">RC</span></code>: Read Clear / <code class="code docutils literal notranslate"><span class="pre">R/WC</span></code>: Read Write Clear</p>
+</aside>
+</aside>
+</section>
+<section id="id24">
+<h4>Filter Resize<a class="headerlink" href="#id24" title="Link to this heading">¶</a></h4>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Offset</p></th>
+<th class="head"><p>Name</p></th>
+<th class="head"><p>Type <a class="footnote-reference brackets" href="#id26" id="id25" role="doc-noteref"><span class="fn-bracket">[</span>5<span class="fn-bracket">]</span></a></p></th>
+<th class="head"><p>Initial Value</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>0x0000</p></td>
+<td><p>control</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0010</p></td>
+<td><p>module_id</p></td>
+<td><p>R</p></td>
+<td><p>0x0000F2C2</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0020</p></td>
+<td><p>local_version</p></td>
+<td><p>R</p></td>
+<td><p>(Version Number)</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0030</p></td>
+<td><p>rows_in</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0034</p></td>
+<td><p>cols_in</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0038</p></td>
+<td><p>rows_out</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x003C</p></td>
+<td><p>cols_out</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0040</p></td>
+<td><p>stat_sel_channel</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0050</p></td>
+<td><p>stat_ingr_rcv_data_0_value_l</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0054</p></td>
+<td><p>stat_ingr_rcv_data_0_value_h</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0058</p></td>
+<td><p>stat_ingr_rcv_data_1_value_l</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x005C</p></td>
+<td><p>stat_ingr_rcv_data_1_value_h</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0060</p></td>
+<td><p>stat_egr_snd_data_0_value_l</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0064</p></td>
+<td><p>stat_egr_snd_data_0_value_h</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0068</p></td>
+<td><p>stat_egr_snd_data_1_value_l</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x006C</p></td>
+<td><p>stat_egr_snd_data_1_value_h</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0070</p></td>
+<td><p>stat_ingr_rcv_frame_0_value</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0074</p></td>
+<td><p>stat_ingr_rcv_frame_1_value</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0078</p></td>
+<td><p>stat_egr_snd_frame_0_value</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x007C</p></td>
+<td><p>stat_egr_snd_frame_1_value</p></td>
+<td><p>RC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0100</p></td>
+<td><p>detect_fault</p></td>
+<td><p>R</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0110</p></td>
+<td><p>ingr_rcv_protocol_fault_0</p></td>
+<td><p>R/WC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0118</p></td>
+<td><p>ingr_rcv_protocol_fault_0_mask</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x011C</p></td>
+<td><p>ingr_rcv_protocol_fault_0_force</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0120</p></td>
+<td><p>ingr_rcv_protocol_fault_1</p></td>
+<td><p>R/WC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0128</p></td>
+<td><p>ingr_rcv_protocol_fault_1_mask</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x012C</p></td>
+<td><p>ingr_rcv_protocol_fault_1_force</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0130</p></td>
+<td><p>egr_snd_protocol_fault_0</p></td>
+<td><p>R/WC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0138</p></td>
+<td><p>egr_snd_protocol_fault_0_mask</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x013C</p></td>
+<td><p>egr_snd_protocol_fault_0_force</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0140</p></td>
+<td><p>egr_snd_protocol_fault_1</p></td>
+<td><p>R/WC</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0148</p></td>
+<td><p>egr_snd_protocol_fault_1_mask</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x014C</p></td>
+<td><p>egr_snd_protocol_fault_1_force</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0150</p></td>
+<td><p>streamif_stall</p></td>
+<td><p>R</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0158</p></td>
+<td><p>streamif_stall_mask</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x015C</p></td>
+<td><p>streamif_stall_force</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0180</p></td>
+<td><p>ingr_rcv_insert_protocol_fault_0</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x0184</p></td>
+<td><p>ingr_rcv_insert_protocol_fault_1</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-even"><td><p>0x0188</p></td>
+<td><p>egr_snd_insert_protocol_fault_0</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+<tr class="row-odd"><td><p>0x018C</p></td>
+<td><p>egr_snd_insert_protocol_fault_1</p></td>
+<td><p>R/W</p></td>
+<td><p>0x00000000</p></td>
+</tr>
+</tbody>
+</table>
+<aside class="footnote-list brackets">
+<aside class="footnote brackets" id="id26" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id25">5</a><span class="fn-bracket">]</span></span>
+<p><code class="code docutils literal notranslate"><span class="pre">R/W</span></code>: Read Write / <code class="code docutils literal notranslate"><span class="pre">R</span></code>: Read Only / <code class="code docutils literal notranslate"><span class="pre">RC</span></code>: Read Clear / <code class="code docutils literal notranslate"><span class="pre">R/WC</span></code>: Read Write Clear</p>
+</aside>
+</aside>
+</section>
+</section>
+<section id="id27">
+<h3>リソース情報<a class="headerlink" href="#id27" title="Link to this heading">¶</a></h3>
+<p>参考として、実装サンプルのリソースレポートを例示します。</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>1. CLB Logic
+------------
+
++----------------------------+--------+-------+------------+-----------+-------+
+|          Site Type         |  Used  | Fixed | Prohibited | Available | Util% |
++----------------------------+--------+-------+------------+-----------+-------+
+| CLB LUTs                   | 546439 |     0 |          0 |   1728000 | 31.62 |
+|   LUT as Logic             | 514191 |     0 |          0 |   1728000 | 29.76 |
+|   LUT as Memory            |  32248 |     0 |          0 |    791040 |  4.08 |
+|     LUT as Distributed RAM |  21292 |     0 |            |           |       |
+|     LUT as Shift Register  |  10956 |     0 |            |           |       |
+| CLB Registers              | 708697 |     8 |          0 |   3456000 | 20.51 |
+|   Register as Flip Flop    | 708564 |     8 |          0 |   3456000 | 20.50 |
+|   Register as Latch        |    128 |     0 |          0 |   3456000 | &lt;0.01 |
+|   Register as AND/OR       |      5 |     0 |          0 |   3456000 | &lt;0.01 |
+| CARRY8                     |  16506 |     0 |          0 |    216000 |  7.64 |
+| F7 Muxes                   |  15776 |     0 |          0 |    864000 |  1.83 |
+| F8 Muxes                   |   3797 |     0 |          0 |    432000 |  0.88 |
+| F9 Muxes                   |     92 |     0 |          0 |    216000 |  0.04 |
++----------------------------+--------+-------+------------+-----------+-------+
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>14. SLR CLB Logic and Dedicated Block Utilization
+-------------------------------------------------
+
++----------------------------+--------+--------+--------+-------+--------+--------+--------+--------+
+|          Site Type         |  SLR0  |  SLR1  |  SLR2  |  SLR3 | SLR0 % | SLR1 % | SLR2 % | SLR3 % |
++----------------------------+--------+--------+--------+-------+--------+--------+--------+--------+
+| CLB                        |  40680 |  50177 |  24476 |  6500 |  75.33 |  92.92 |  45.33 |  12.04 |
+|   CLBL                     |  22119 |  27186 |  13172 |  3602 |  75.54 |  92.85 |  44.99 |  12.30 |
+|   CLBM                     |  18561 |  22991 |  11304 |  2898 |  75.08 |  93.01 |  45.73 |  11.72 |
+| CLB LUTs                   | 185688 | 228277 | 108015 | 24459 |  42.98 |  52.84 |  25.00 |   5.66 |
+|   LUT as Logic             | 182063 | 211766 |  98446 | 21916 |  42.14 |  49.02 |  22.79 |   5.07 |
+|     using O5 output only   |   1352 |   2272 |   1260 |   518 |   0.31 |   0.53 |   0.29 |   0.12 |
+|     using O6 output only   | 141199 | 149601 |  55462 | 14701 |  32.68 |  34.63 |  12.84 |   3.40 |
+|     using O5 and O6        |  39512 |  59893 |  41724 |  6697 |   9.15 |  13.86 |   9.66 |   1.55 |
+|   LUT as Memory            |   3625 |  16511 |   9569 |  2543 |   1.83 |   8.35 |   4.84 |   1.29 |
+|     LUT as Distributed RAM |   2912 |   8054 |   8450 |  1876 |   1.47 |   4.07 |   4.27 |   0.95 |
+|       using O5 output only |      0 |      0 |      0 |     0 |   0.00 |   0.00 |   0.00 |   0.00 |
+|       using O6 output only |    320 |   1314 |      2 |     0 |   0.16 |   0.66 |  &lt;0.01 |   0.00 |
+|       using O5 and O6      |   2592 |   6740 |   8448 |  1876 |   1.31 |   3.41 |   4.27 |   0.95 |
+|     LUT as Shift Register  |    713 |   8457 |   1119 |   667 |   0.36 |   4.28 |   0.57 |   0.34 |
+|       using O5 output only |      0 |      0 |      0 |     0 |   0.00 |   0.00 |   0.00 |   0.00 |
+|       using O6 output only |    630 |   4530 |    986 |   632 |   0.32 |   2.29 |   0.50 |   0.32 |
+|       using O5 and O6      |     83 |   3927 |    133 |    35 |   0.04 |   1.99 |   0.07 |   0.02 |
+| CLB Registers              | 215945 | 335319 | 118243 | 39190 |  24.99 |  38.81 |  13.69 |   4.54 |
+| CARRY8                     |   6800 |   6128 |   3520 |    58 |  12.59 |  11.35 |   6.52 |   0.11 |
+| F7 Muxes                   |   8404 |   5627 |   1244 |   501 |   3.89 |   2.61 |   0.58 |   0.23 |
+| F8 Muxes                   |   2109 |   1388 |    242 |    58 |   1.95 |   1.29 |   0.22 |   0.05 |
+| F9 Muxes                   |      0 |     92 |      0 |     0 |   0.00 |   0.17 |   0.00 |   0.00 |
+| Block RAM Tile             |    220 |    428 |    124 |  25.5 |  32.74 |  63.69 |  18.45 |   3.79 |
+|   RAMB36/FIFO              |    166 |    350 |    122 |    25 |  24.70 |  52.08 |  18.15 |   3.72 |
+|   RAMB18                   |    108 |    156 |      4 |     1 |   8.04 |  11.61 |   0.30 |   0.07 |
+| URAM                       |      0 |     92 |      0 |     0 |   0.00 |  28.75 |   0.00 |   0.00 |
+| DSPs                       |      3 |    537 |     15 |     3 |   0.10 |  17.48 |   0.49 |   0.10 |
+| Unique Control Sets        |   5073 |  10444 |   2766 |  1159 |   4.70 |   9.67 |   2.56 |   1.07 |
++----------------------------+--------+--------+--------+-------+--------+--------+--------+--------+
+* Note: Available Control Sets based on CLB Registers / 8
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>1. Utilization by Hierarchy
+---------------------------
+
++-------------------------------+----------------------------------------+------------+------------+---------+-------+--------+--------+--------+------+------------+
+|           Instance            |                  Module                | Total LUTs | Logic LUTs | LUTRAMs |  SRLs |   FFs  | RAMB36 | RAMB18 | URAM | DSP Blocks |
++-------------------------------+----------------------------------------+------------+------------+---------+-------+--------+--------+--------+------+------------+
+| function_0                    |                 function_0_imp_1MVGFZK |      60739 |      59436 |     208 |  1095 |  61079 |    117 |      5 |   32 |         75 |
+|   axi4l_decoupler_conv        |        design_1_axi4l_decoupler_conv_0 |          7 |          7 |       0 |     0 |      0 |      0 |      0 |    0 |          0 |
+|   axi4l_decoupler_filter      |      design_1_axi4l_decoupler_filter_0 |          7 |          7 |       0 |     0 |      0 |      0 |      0 |    0 |          0 |
+|   conversion_ada_0            |            design_1_conversion_ada_0_0 |      25150 |      24075 |     208 |   867 |  30289 |     43 |      3 |   32 |         21 |
+|   dfx_decoupler_conv_axi_m    |    design_1_dfx_decoupler_conv_axi_m_0 |          5 |          5 |       0 |     0 |      0 |      0 |      0 |    0 |          0 |
+|   dfx_decoupler_conv_axis_m   |   design_1_dfx_decoupler_conv_axis_m_0 |          9 |          9 |       0 |     0 |      0 |      0 |      0 |    0 |          0 |
+|   dfx_decoupler_conv_axis_s   |   design_1_dfx_decoupler_conv_axis_s_0 |          9 |          9 |       0 |     0 |      0 |      0 |      0 |    0 |          0 |
+|   dfx_decoupler_conv_fault    |    design_1_dfx_decoupler_conv_fault_0 |          1 |          1 |       0 |     0 |      0 |      0 |      0 |    0 |          0 |
+|   dfx_decoupler_filter_axis_m | design_1_dfx_decoupler_filter_axis_m_0 |          6 |          6 |       0 |     0 |      0 |      0 |      0 |    0 |          0 |
+|   dfx_decoupler_filter_axis_s | design_1_dfx_decoupler_filter_axis_s_0 |          6 |          6 |       0 |     0 |      0 |      0 |      0 |    0 |          0 |
+|   dfx_decoupler_filter_fault  |  design_1_dfx_decoupler_filter_fault_0 |          1 |          1 |       0 |     0 |      0 |      0 |      0 |    0 |          0 |
+|   filter_resize_0             |             design_1_filter_resize_0_0 |      35554 |      35326 |       0 |   228 |  30790 |     74 |      2 |    0 |         54 |
+|   xlconcat_1                  |                  design_1_xlconcat_1_1 |          0 |          0 |       0 |     0 |      0 |      0 |      0 |    0 |          0 |
+| function_1                    |                 function_1_imp_1I7392R |      60704 |      59401 |     208 |  1095 |  61087 |    117 |      5 |   32 |         75 |
+|   axi4l_decoupler_conv        |        design_1_axi4l_decoupler_conv_1 |          7 |          7 |       0 |     0 |      0 |      0 |      0 |    0 |          0 |
+|   axi4l_decoupler_filter      |      design_1_axi4l_decoupler_filter_1 |          7 |          7 |       0 |     0 |      0 |      0 |      0 |    0 |          0 |
+|   conversion_ada_0            |            design_1_conversion_ada_0_1 |      25121 |      24046 |     208 |   867 |  30270 |     43 |      3 |   32 |         21 |
+|   dfx_decoupler_conv_axi_m    |    design_1_dfx_decoupler_conv_axi_m_1 |          5 |          5 |       0 |     0 |      0 |      0 |      0 |    0 |          0 |
+|   dfx_decoupler_conv_axis_m   |   design_1_dfx_decoupler_conv_axis_m_1 |          9 |          9 |       0 |     0 |      0 |      0 |      0 |    0 |          0 |
+|   dfx_decoupler_conv_axis_s   |   design_1_dfx_decoupler_conv_axis_s_1 |          9 |          9 |       0 |     0 |      0 |      0 |      0 |    0 |          0 |
+|   dfx_decoupler_conv_fault    |    design_1_dfx_decoupler_conv_fault_1 |          1 |          1 |       0 |     0 |      0 |      0 |      0 |    0 |          0 |
+|   dfx_decoupler_filter_axis_m | design_1_dfx_decoupler_filter_axis_m_1 |          6 |          6 |       0 |     0 |      0 |      0 |      0 |    0 |          0 |
+|   dfx_decoupler_filter_axis_s | design_1_dfx_decoupler_filter_axis_s_1 |          6 |          6 |       0 |     0 |      0 |      0 |      0 |    0 |          0 |
+|   dfx_decoupler_filter_fault  |  design_1_dfx_decoupler_filter_fault_1 |          1 |          1 |       0 |     0 |      0 |      0 |      0 |    0 |          0 |
+|   filter_resize_0             |             design_1_filter_resize_0_1 |      35551 |      35323 |       0 |   228 |  30817 |     74 |      2 |    0 |         54 |
+|   xlconcat_1                  |                  design_1_xlconcat_1_2 |          0 |          0 |       0 |     0 |      0 |      0 |      0 |    0 |          0 |
++-------------------------------+----------------------------------------+------------+------------+---------+-------+--------+--------+--------+------+------------+
+* Note: The sum of lower-level cells may be larger than their parent cells total, due to cross-hierarchy LUT combining
+</pre></div>
+</div>
+</section>
+</section>
+<section id="id28">
+<h2>新たなファンクションブロックの設計<a class="headerlink" href="#id28" title="Link to this heading">¶</a></h2>
+<p>これ以降、hardware-design リポジトリのルートを <code class="code docutils literal notranslate"><span class="pre">$workdir/hardware-design</span></code> とし、追加する新しいファンクションブロックのモジュール名を <code class="code docutils literal notranslate"><span class="pre">myfunc</span></code> とします。</p>
+<section id="id29">
+<h3>ディレクトリ構成<a class="headerlink" href="#id29" title="Link to this heading">¶</a></h3>
+<p><code class="code docutils literal notranslate"><span class="pre">$workdir/hardware-design/function/</span></code> の配下に新しいファンクションブロックを格納するディレクトリを作成します。</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>$workdir/hardware-design/function/
++-- myfunc/
+    +-- src/
+    |   +-- hls/
+    |   |   +-- include/
+    |   |   |   +-- *.h / *.hpp ..... 高位合成用C/C++ヘッダファイル
+    |   |   +-- *.c / *.hpp ......... 高位合成用C/C++ソースファイル
+    |   +-- hdl/
+    |   |   +-- *.v / *.sv .......... RTLソースファイル
+    |   +-- ip/
+    |       +-- *.xci ............... IP生成用ファイル
+    +-- script/
+        +-- hls/
+        |   +-- ipgen.sh ............ IPビルド用スクリプト
+        |   +-- Makefile ............ IPビルド用Makefile
+        |   +-- ipgen_template.tc ... IPビルド用TCLスクリプトのテンプレート
+        +-- ip/
+            +-- Makefile.bd_top.mk .. IP化用Makefile
+            +-- myfunc_bd.tcl ....... ブロックデザイン生成用TCLスクリプト
+            +-- package_kernel.bd_top.tcl
+                              ....... IP化用TCLスクリプト
+</pre></div>
+</div>
+<p>使用しないディレクトリは省略できます。例えば高位合成ソースを含まない場合は <code class="code docutils literal notranslate"><span class="pre">hls/</span></code> は不要です。</p>
+<p><code class="code docutils literal notranslate"><span class="pre">script/</span></code> 配下のスクリプト類は、既存のファンクションブロックのスクリプトなどを参考に作成することができます。</p>
+<p>重要なのは <code class="code docutils literal notranslate"><span class="pre">Makefile.bd_top.mk</span></code> であり、以下のコマンドにてファンクションブロックのパッケージ化が行えるように構成する必要があります。</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span><span class="nv">$workdir</span>/hardware-design/function/myfunc/script/ip
+$<span class="w"> </span>make<span class="w"> </span>-f<span class="w"> </span>Makefile.bd_top.mk<span class="w"> </span>all
+</pre></div>
+</div>
+</section>
+<section id="id30">
+<h3>ビルドスクリプトの編集<a class="headerlink" href="#id30" title="Link to this heading">¶</a></h3>
+<p>Vivadoプロジェクトに myfunc を取り込むためにディレクトリに格納したソースコードをスクリプトに追加します。</p>
+<section id="hdl">
+<h4>HDLソースファイルの追加<a class="headerlink" href="#hdl" title="Link to this heading">¶</a></h4>
+<p><code class="code docutils literal notranslate"><span class="pre">$workdir/hardware-design/example-design/script/impl/build_design.tcl</span></code> を編集し、<code class="code docutils literal notranslate"><span class="pre">add_files</span></code> コマンドを追加します。</p>
+<div class="highlight-tcl notranslate"><div class="highlight"><pre><span></span><span class="c"># Add source</span>
+<span class="nv">add_files</span><span class="w"> </span><span class="o">-</span>norecurse<span class="w"> </span><span class="k">{</span><span class="w"> </span><span class="err">\</span>
+<span class="nv">..</span><span class="o">/</span>..<span class="o">/</span>function<span class="o">/</span>myfunc<span class="o">/</span>src<span class="o">/</span>hdl<span class="o">/</span>AAA<span class="o">/</span>aaa.sv<span class="w"> </span><span class="err">\</span>
+<span class="nv">..</span><span class="o">/</span>..<span class="o">/</span>function<span class="o">/</span>myfunc<span class="o">/</span>src<span class="o">/</span>hdl<span class="o">/</span>AAA<span class="o">/</span>bbb.sv<span class="w"> </span><span class="err">\</span>
+<span class="nv">..</span><span class="o">/</span>..<span class="o">/</span>function<span class="o">/</span>myfunc<span class="o">/</span>src<span class="o">/</span>hdl<span class="o">/</span>BBB<span class="o">/</span>ccc.sv<span class="w"> </span><span class="err">\</span>
+<span class="nv">..</span><span class="o">/</span>..<span class="o">/</span>function<span class="o">/</span>myfunc<span class="o">/</span>src<span class="o">/</span>hdl<span class="o">/</span>BBB<span class="o">/</span>ddd.v<span class="w"> </span><span class="err">\</span>
+<span class="k">}</span>
+
+<span class="c"># Add IP</span>
+<span class="nv">add_files</span><span class="w"> </span><span class="o">-</span>norecurse<span class="w"> </span><span class="k">{</span><span class="w"> </span><span class="err">\</span>
+<span class="nv">..</span><span class="o">/</span>..<span class="o">/</span>function<span class="o">/</span>myfunc<span class="o">/</span>src<span class="o">/</span>ip<span class="o">/</span>AAA<span class="o">/</span>aaa.xci<span class="w"> </span><span class="err">\</span>
+<span class="nv">..</span><span class="o">/</span>..<span class="o">/</span>function<span class="o">/</span>myfunc<span class="o">/</span>src<span class="o">/</span>ip<span class="o">/</span>BBB<span class="o">/</span>bbb.xci<span class="w"> </span><span class="err">\</span>
+<span class="nv">..</span><span class="o">/</span>..<span class="o">/</span>function<span class="o">/</span>myfunc<span class="o">/</span>src<span class="o">/</span>ip<span class="o">/</span>CCC<span class="o">/</span>ccc.xci<span class="w"> </span><span class="err">\</span>
+<span class="k">}</span>
+</pre></div>
+</div>
+</section>
+<section id="id31">
+<h4>高位合成ビルドコマンドの追加<a class="headerlink" href="#id31" title="Link to this heading">¶</a></h4>
+<p><code class="code docutils literal notranslate"><span class="pre">$workdir/hardware-design/example-design/script/Makefile</span></code> を編集し、<code class="code docutils literal notranslate"><span class="pre">Makefile.bd_top.mk</span></code> を実行するコードを追加します。</p>
+<div class="highlight-diff notranslate"><div class="highlight"><pre><span></span><span class="w"> </span> CONVERSION_ADAPTOR_DIR = ../../function/filter_resize/conversion_adaptor/script/ip
+<span class="gd">- FILTER_RESIZE_DIR = ../../function/filter_resize/filter_resize/script/ip</span>
+<span class="gi">+ MYFUNC_DIR = ../../function/myfunc/script/ip</span>
+</pre></div>
+</div>
+<div class="highlight-diff notranslate"><div class="highlight"><pre><span></span><span class="gd">- ifeq ($(USE_FIL), 1)</span>
+<span class="gd">- LIST_XO += $(CONVERSION_ADAPTOR_DIR)/conversion_adaptor.xo</span>
+<span class="gd">- LIST_XO += $(FILTER_RESIZE_DIR)/filter_resize.xo</span>
+<span class="gd">- endif</span>
+<span class="gi">+ LIST_XO += $(MYFUNC_DIR)/myfunc.xo</span>
+</pre></div>
+</div>
+<div class="highlight-diff notranslate"><div class="highlight"><pre><span></span><span class="w"> </span> distcleanall: distclean
+<span class="w"> </span>   make -C $(CHAIN_CONTROL_DIR) -f Makefile.bd_top.mk clean
+<span class="w"> </span>   make -C $(DIRECT_TRANS_ADAPTOR_DIR) -f Makefile.bd_top.mk clean
+<span class="w"> </span>   make -C $(CONVERSION_ADAPTOR_DIR) -f Makefile.bd_top.mk clean
+<span class="gd">-   make -C $(FILTER_RESIZE_DIR) -f Makefile.bd_top.mk clean</span>
+<span class="gi">+   make -C $(MYFUNC_DIR) -f Makefile.bd_top.mk clean</span>
+</pre></div>
+</div>
+<div class="highlight-diff notranslate"><div class="highlight"><pre><span></span><span class="w"> </span> # Building kernel
+<span class="gd">- $(FILTER_RESIZE_DIR)/%.xo:</span>
+<span class="w"> </span>   -   make -C $(FILTER_RESIZE_DIR) -f Makefile.bd_top.mk all
+<span class="gi">+ $(MYFUNC_DIR)/%.xo:</span>
+<span class="gi">+   make -C $(MYFUNC_DIR) -f Makefile.bd_top.mk all</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="vivado">
+<h3>Vivado プロジェクトの編集<a class="headerlink" href="#vivado" title="Link to this heading">¶</a></h3>
+<p>ファンクションブロック置き換えのベースとなる既存構成のVivadoプロジェクトを作成します。Vivadoのツールバージョンについては <a class="reference external" href="./IMPLEMENT.md#ビルド環境">ビルド手順書の『ビルド環境』</a> を参照してください。</p>
+<ol class="arabic">
+<li><p><code class="code docutils literal notranslate"><span class="pre">$workdir/hardware-design/example-design/script/</span></code> に移動し、プロジェクト生成コマンドを実行します。</p>
+<blockquote>
+<div><div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span><span class="nv">$workdir</span>/hardware-design/example-design/script/
+make<span class="w"> </span>build-design
+</pre></div>
+</div>
+<p>カレントディレクトリ配下に <code class="code docutils literal notranslate"><span class="pre">project_1/</span></code> が生成されます。</p>
+</div></blockquote>
+</li>
+<li><p>上記で生成された <code class="code docutils literal notranslate"><span class="pre">project_1/</span></code> に移動し、Vivado プロジェクトを開きます。</p>
+<blockquote>
+<div><div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>project_1
+vivado<span class="w"> </span>project_1.xpr
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>Flow Navigator &gt; IP INTEGRATOR &gt; Open Block Design から Block Design を開きます。</p>
+<blockquote>
+<div><img alt="_images/vivado_open_block_design.png" src="_images/vivado_open_block_design.png" />
+</div></blockquote>
+</li>
+<li><p>Block Design から置き換え元のファンクションブロック( <code class="code docutils literal notranslate"><span class="pre">function_0</span></code> 、 <code class="code docutils literal notranslate"><span class="pre">function_1</span></code> )と <code class="code docutils literal notranslate"><span class="pre">Xlconcat_2</span></code> を削除します。 ※ <code class="code docutils literal notranslate"><span class="pre">Xlconcat_2</span></code> は <code class="code docutils literal notranslate"><span class="pre">function_0/1</span></code> の <code class="code docutils literal notranslate"><span class="pre">decouple</span> <span class="pre">status</span></code> を束ねているもので、実装サンプルでは使用されません。</p>
+<blockquote>
+<div><img alt="_images/vivado_del_func.png" src="_images/vivado_del_func.png" />
+</div></blockquote>
+</li>
+<li><p>Add Module(RTLの場合) または Add IP(高位合成の場合) で Block Design に myfunc を追加します。</p>
+<blockquote>
+<div><img alt="_images/vivado_add_module.png" src="_images/vivado_add_module.png" />
+</div></blockquote>
+</li>
+<li><p>追加したファンクションブロックの端子を周辺のブロックに接続するために、接続用スクリプトを準備します。スクリプト内の <code class="code docutils literal notranslate"><span class="pre">function_0/1</span></code> を、新たに配置したファンクションブロックのインスタンス名に置き換えます。</p>
+<blockquote>
+<div><div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>cp<span class="w"> </span><span class="nv">$workdir</span>/hardware-design/example-design/script/impl/function_connect_conf1.tcl<span class="w"> </span>.
+sed<span class="w"> </span>-i<span class="w"> </span>function_connect_conf1.tcl<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;s/function_0/myfunc_0/g&quot;</span>
+sed<span class="w"> </span>-i<span class="w"> </span>function_connect_conf1.tcl<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;s/function_1/myfunc_1/g&quot;</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>Tcl Console タブを選択し、上記スクリプトを使用して接続を実施します。</p>
+<blockquote>
+<div><img alt="_images/vivado_source_connect_conf.png" src="_images/vivado_source_connect_conf.png" />
+</div></blockquote>
+</li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">Ctrl</span> <span class="pre">+</span> <span class="pre">S</span></code> で Block Design を保存します。</p></li>
+<li><p>ビルドの自動化のため、Block Design を TCLスクリプトにエクスポートします。Tcl Console で次のコマンドを実行します。</p>
+<blockquote>
+<div><div class="highlight-tcl notranslate"><div class="highlight"><pre><span></span><span class="nv">write_bd_tcl</span><span class="w"> </span><span class="o">-</span>force<span class="w"> </span>tmp.tcl
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>Vivado を終了します。</p></li>
+<li><p>上記で作成した <code class="code docutils literal notranslate"><span class="pre">tmp.tcl</span></code> をそのまま使用するとエラーが発生するため、修正します。下記の行をコメントアウトまたは削除します。</p>
+<ul class="simple">
+<li><p>アドレス設定: <code class="code docutils literal notranslate"><span class="pre">assign_bd_address</span> <span class="pre">***</span></code></p></li>
+<li><p>デザインバリデーション: <code class="code docutils literal notranslate"><span class="pre">validate_bd_design</span></code></p></li>
+</ul>
+</li>
+<li><p>修正後の TCL スクリプトを <code class="code docutils literal notranslate"><span class="pre">$workdir/hardware-design/example-design/script/impl/bd_design_conf1.tcl</span></code> に上書きします。</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>cp<span class="w"> </span>tmp.tcl<span class="w"> </span>../impl/function_connect_conf1.tcl
+</pre></div>
+</div>
+</li>
+<li><p>置き換えたファンクションブロックのレジスタアクセスを可能とするために、アドレスマッピングを修正します。 <code class="code docutils literal notranslate"><span class="pre">$workdir/hardware-design/example-design/script/impl/bd_address_conf1.csv</span></code> の <code class="code docutils literal notranslate"><span class="pre">function0/1</span></code> を、Block Design に追加した <code class="code docutils literal notranslate"><span class="pre">myfunc</span></code> のインスタンス名/端子名に置き換えます。アドレスマップに変更がある場合は <code class="code docutils literal notranslate"><span class="pre">myfunc</span></code> に設定したいアドレスに変更します。</p>
+<ul>
+<li><p>修正対象箇所</p>
+<blockquote>
+<div><div class="highlight-tcl notranslate"><div class="highlight"><pre><span></span><span class="nv">SEG_axi4l_decoupler_conv_reg0_1</span>,<span class="o">/</span>axis2axi_bridge_0<span class="o">/</span>m_axi,<span class="o">/</span>function_0<span class="o">/</span>axi4l_decoupler_conv<span class="o">/</span>s_axi<span class="o">/</span>reg0,0x24000,1K
+<span class="nv">SEG_axi4l_decoupler_conv_reg0</span>,<span class="o">/</span>axis2axi_bridge_0<span class="o">/</span>m_axi,<span class="o">/</span>function_1<span class="o">/</span>axi4l_decoupler_conv<span class="o">/</span>s_axi<span class="o">/</span>reg0,0x24400,1K
+<span class="nv">SEG_axi4l_decoupler_filter_reg0_1</span>,<span class="o">/</span>axis2axi_bridge_0<span class="o">/</span>m_axi,<span class="o">/</span>function_0<span class="o">/</span>axi4l_decoupler_filter<span class="o">/</span>s_axi<span class="o">/</span>reg0,0x25000,1K
+<span class="nv">SEG_axi4l_decoupler_filter_reg0</span>,<span class="o">/</span>axis2axi_bridge_0<span class="o">/</span>m_axi,<span class="o">/</span>function_1<span class="o">/</span>axi4l_decoupler_filter<span class="o">/</span>s_axi<span class="o">/</span>reg0,0x26000,1K
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>削除対象箇所</p>
+<blockquote>
+<div><div class="highlight-tcl notranslate"><div class="highlight"><pre><span></span><span class="c"># Assignments in Address Space /function_0/axi4l_decoupler_conv/m_axi</span>
+<span class="c">#</span>
+<span class="nv">SEG_conversion_ada_0_reg0</span>,<span class="o">/</span>function_0<span class="o">/</span>axi4l_decoupler_conv<span class="o">/</span>m_axi,<span class="o">/</span>function_0<span class="o">/</span>conversion_ada_0<span class="o">/</span>s_axi_control<span class="o">/</span>reg0,0x000,1K
+<span class="c">#</span>
+<span class="c"># Assignments in Address Space /function_0/axi4l_decoupler_filter/m_axi</span>
+<span class="c">#</span>
+<span class="nv">SEG_filter_resize_0_reg0</span>,<span class="o">/</span>function_0<span class="o">/</span>axi4l_decoupler_filter<span class="o">/</span>m_axi,<span class="o">/</span>function_0<span class="o">/</span>filter_resize_0<span class="o">/</span>s_axi_control<span class="o">/</span>reg0,0x000,1K
+<span class="c">#</span>
+<span class="c"># Assignments in Address Space /function_0/conversion_ada_0/m_axi_ingr_frame_buffer</span>
+<span class="c">#</span>
+<span class="nv">SEG_ddr4_1_C0_DDR4_ADDRESS_BLOCK</span>,<span class="o">/</span>function_0<span class="o">/</span>conversion_ada_0<span class="o">/</span>m_axi_ingr_frame_buffer,<span class="o">/</span>ddr4_1<span class="o">/</span>C0_DDR4_MEMORY_MAP<span class="o">/</span>C0_DDR4_ADDRESS_BLOCK,0x400000000,16G
+<span class="c">#</span>
+<span class="c"># Assignments in Address Space /function_1/axi4l_decoupler_conv/m_axi</span>
+<span class="c">#</span>
+<span class="nv">SEG_conversion_ada_0_reg0</span>,<span class="o">/</span>function_1<span class="o">/</span>axi4l_decoupler_conv<span class="o">/</span>m_axi,<span class="o">/</span>function_1<span class="o">/</span>conversion_ada_0<span class="o">/</span>s_axi_control<span class="o">/</span>reg0,0x000,1K
+<span class="c">#</span>
+<span class="c"># Assignments in Address Space /function_1/axi4l_decoupler_filter/m_axi</span>
+<span class="c">#</span>
+<span class="nv">SEG_filter_resize_0_reg0</span>,<span class="o">/</span>function_1<span class="o">/</span>axi4l_decoupler_filter<span class="o">/</span>m_axi,<span class="o">/</span>function_1<span class="o">/</span>filter_resize_0<span class="o">/</span>s_axi_control<span class="o">/</span>reg0,0x000,1K
+<span class="c">#</span>
+<span class="c"># Assignments in Address Space /function_1/conversion_ada_0/m_axi_ingr_frame_buffer</span>
+<span class="c">#</span>
+<span class="nv">SEG_ddr4_1_C0_DDR4_ADDRESS_BLOCK</span>,<span class="o">/</span>function_1<span class="o">/</span>conversion_ada_0<span class="o">/</span>m_axi_ingr_frame_buffer,<span class="o">/</span>ddr4_1<span class="o">/</span>C0_DDR4_MEMORY_MAP<span class="o">/</span>C0_DDR4_ADDRESS_BLOCK,0x400000000,16G
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+</ul>
+</li>
+<li><p>ビルドを実行し、Bitstream を生成します。</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span><span class="nv">$workdir</span>/hardware-design/example-design/script/
+make<span class="w"> </span>run-impl
+</pre></div>
+</div>
+</li>
+</ol>
+</section>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">ファンクションブロック開発ガイドライン</a><ul>
+<li><a class="reference internal" href="#id2">本資料の目的と位置づけ</a><ul>
+<li><a class="reference internal" href="#id3">目的</a></li>
+<li><a class="reference internal" href="#id4">ファンクションブロック開発フロー</a></li>
+<li><a class="reference internal" href="#fpga">FPGAカード諸元</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id7">実装サンプルの構成</a><ul>
+<li><a class="reference internal" href="#chain-control">Chain Control</a></li>
+<li><a class="reference internal" href="#lldma-low-latency-direct-device-memory-access">LLDMA (Low-Latency direct Device Memory Access)</a></li>
+<li><a class="reference internal" href="#network-terminator">Network Terminator</a></li>
+<li><a class="reference internal" href="#direct-transfer-adapter">Direct Transfer Adapter</a></li>
+<li><a class="reference internal" href="#function-conversion-adapter-filter-resize">Function (Conversion Adapter/Filter Resize)</a></li>
+<li><a class="reference internal" href="#id8">その他のブロック</a></li>
+<li><a class="reference internal" href="#clock-reset">Clock/Reset 系</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#func-intf-spec">ファンクションブロックインタフェース仕様</a><ul>
+<li><a class="reference internal" href="#aclk-mm">クロック入力 (aclk_mm)</a></li>
+<li><a class="reference internal" href="#aresetn-mm-filter-conv">リセット入力 (aresetn_mm_filter/conv)</a></li>
+<li><a class="reference internal" href="#ingress-axis-ingr-req-resp-data">Ingress 転送インタフェース (axis_ingr_req/resp/data)</a></li>
+<li><a class="reference internal" href="#egress-axis-egr-req-resp-data">Egress 転送インタフェース (axis_egr_req/resp/data)</a></li>
+<li><a class="reference internal" href="#ddr-m-axi-conv">DDR アクセスインタフェース (m_axi_conv)</a></li>
+<li><a class="reference internal" href="#s-axi-control-func-conv">レジスタアクセスインタフェース (s_axi_control_func/conv)</a></li>
+<li><a class="reference internal" href="#detect-fault-filter-conv">障害検出通知 (detect_fault_filter/conv)</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id12">ブロック間のデータ転送プロトコル</a><ul>
+<li><a class="reference internal" href="#id13">データフレームとトランザクションの関係</a></li>
+<li><a class="reference internal" href="#req-resp">req / resp</a></li>
+<li><a class="reference internal" href="#data">data</a></li>
+<li><a class="reference internal" href="#id18">タイミング</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id19">フィルタリサイズファンクションブロック仕様</a><ul>
+<li><a class="reference internal" href="#conversion-adapter">Conversion Adapter</a></li>
+<li><a class="reference internal" href="#filter-resize">Filter Resize</a></li>
+<li><a class="reference internal" href="#id20">ファンクションブロックレジスタマップ</a><ul>
+<li><a class="reference internal" href="#id21">Conversion Adapter</a></li>
+<li><a class="reference internal" href="#id24">Filter Resize</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id27">リソース情報</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id28">新たなファンクションブロックの設計</a><ul>
+<li><a class="reference internal" href="#id29">ディレクトリ構成</a></li>
+<li><a class="reference internal" href="#id30">ビルドスクリプトの編集</a><ul>
+<li><a class="reference internal" href="#hdl">HDLソースファイルの追加</a></li>
+<li><a class="reference internal" href="#id31">高位合成ビルドコマンドの追加</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#vivado">Vivado プロジェクトの編集</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >Index</a></li>
+        <li class="nav-item nav-item-0"><a href="index.html">OpenKasugai Hardware 2024.11.18 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">ファンクションブロック開発ガイドライン</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.0.2.
+    </div>
+  </body>
+</html>

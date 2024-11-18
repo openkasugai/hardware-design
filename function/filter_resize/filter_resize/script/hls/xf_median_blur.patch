@@ -1,0 +1,33 @@
+--- tmp_Vitis_Libraries/vision/L1/include/imgproc/xf_median_blur.hpp	2024-08-03 03:34:15.343420830 +0900
++++ ../../src/hls/common/include/imgproc/xf_median_blur.hpp	2024-08-03 03:32:29.379423284 +0900
+@@ -122,8 +122,8 @@ Compute_Grad_Loop:
+ }
+ 
+ template <int ROWS, int COLS, int PLANES, int TYPE, int NPC, int WORDWIDTH, int TC, int WIN_SZ, int WIN_SZ_SQ>
+-void ProcessMedianNxN(xf::cv::Mat<TYPE, ROWS, COLS, NPC>& _src_mat,
+-                      xf::cv::Mat<TYPE, ROWS, COLS, NPC>& _out_mat,
++void ProcessMedianNxN(xf::cv::Mat<TYPE, ROWS, COLS, NPC, 2>& _src_mat,
++                      xf::cv::Mat<TYPE, ROWS, COLS, NPC, 2>& _out_mat,
+                       XF_TNAME(TYPE, NPC) buf[WIN_SZ][(COLS >> XF_BITSHIFT(NPC))],
+                       XF_DTUNAME(TYPE, NPC) src_buf[WIN_SZ][XF_NPIXPERCYCLE(NPC) + (WIN_SZ - 1)],
+                       XF_DTUNAME(TYPE, NPC) OutputValues[XF_NPIXPERCYCLE(NPC)],
+@@ -350,8 +350,8 @@ Col_Loop:
+ }
+ 
+ template <int ROWS, int COLS, int PLANES, int TYPE, int NPC, int WORDWIDTH, int TC, int WIN_SZ, int WIN_SZ_SQ>
+-void xFMedianNxN(xf::cv::Mat<TYPE, ROWS, COLS, NPC>& _src,
+-                 xf::cv::Mat<TYPE, ROWS, COLS, NPC>& _dst,
++void xFMedianNxN(xf::cv::Mat<TYPE, ROWS, COLS, NPC, 2>& _src,
++                 xf::cv::Mat<TYPE, ROWS, COLS, NPC, 2>& _dst,
+                  ap_uint<8> win_size,
+                  uint16_t img_height,
+                  uint16_t img_width) {
+@@ -448,7 +448,7 @@ Row_Loop:
+ }
+ 
+ template <int FILTER_SIZE, int BORDER_TYPE, int TYPE, int ROWS, int COLS, int NPC = 1>
+-void medianBlur(xf::cv::Mat<TYPE, ROWS, COLS, NPC>& _src, xf::cv::Mat<TYPE, ROWS, COLS, NPC>& _dst) {
++void medianBlur(xf::cv::Mat<TYPE, ROWS, COLS, NPC, 2>& _src, xf::cv::Mat<TYPE, ROWS, COLS, NPC, 2>& _dst) {
+ // clang-format off
+     #pragma HLS INLINE OFF
+     // clang-format on

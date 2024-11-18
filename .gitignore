@@ -1,0 +1,22 @@
+# Intermediate File
+*.log
+core.*
+*.xo
+*.jou
+tmp.*
+
+# Working Directory
+chain-control/chain_control/script/src/ip/
+chain-control/direct_trans_adaptor/script/src/ip/
+external-if/cif_ip.gen/sources_1/ip/
+external-if/project_1.gen/
+external-if/project_6.gen/
+function/filter_resize/conversion_adaptor/script/src/ip/
+function/filter_resize/filter_resize/script/src/ip/
+function/filter_resize/filter_resize/src/hls/common/include/
+example-design/script/impl/ip/
+example-design/script/project_*/
+.Xil/
+*_prj/
+tmp_*/
+pack_*/
