@@ -83,6 +83,11 @@ Describes the environment used to validate the sample implementation. Refer to [
 |DPDK|23.11.1|
 |OpenCV|3.4.3|
 
+# literature
+
+Y. Ukon, T. Kawahara, Y. Arikawa, N. Miura, T. Ishizaki, W. kanemori, R. Tamura, K. Mori, and T. Sakamoto, ``Scalable Low-latency Hardware Function Chaining with Chain Control Circuit," The International Conference for High Performance Computing, Networking, Storage, and Analysis (SC24), Nov. 2024.
+https://sc24.supercomputing.org/proceedings/poster/poster_pages/post122.html
+
 # Contributing to OpenKasugai Hardware
 
 Refer to ["Contributing to OpenKasugai Hardware](./CONTRIBUTING.md).
