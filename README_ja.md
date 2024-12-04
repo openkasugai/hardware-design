@@ -84,6 +84,11 @@ OpenKasugai Projectは、FPGA、GPU、xPUといった様々なハードウェア
 |DPDK|23.11|
 |OpenCV|3.4.3|
 
+# 文献
+
+Y. Ukon, T. Kawahara, Y. Arikawa, N. Miura, T. Ishizaki, W. kanemori, R. Tamura, K. Mori, and T. Sakamoto, ``Scalable Low-latency Hardware Function Chaining with Chain Control Circuit," The International Conference for High Performance Computing, Networking, Storage, and Analysis (SC24), Nov. 2024.
+https://sc24.supercomputing.org/proceedings/poster/poster_pages/post122.html
+
 # コントリビューション
 
 [OpenKasugai Hardware へのコントリビューション](./CONTRIBUTING_ja.md)をご参照ください。
