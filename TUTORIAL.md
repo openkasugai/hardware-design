@@ -21,7 +21,8 @@ Two FPGA cards configuration. D2D-H transfers between FPGAs via shared memory on
 # 2. Installation Procedure
 
 ## 2.1. Installing Vivado/Vitis
-Download and install Vivado ML edition 2023.1 from [AMD Download Site](https://japan.xilinx.com/support/download/index.html/content/xilinx/ja/downloadNav/vivado-design-tools/2023-1.html). Vitis is also included in this installer.
+Download and install Vivado ML edition 2023.1 from [AMD Download Site](https://japan.xilinx.com/member/forms/download/xef.html?filename=Xilinx_Unified_2023.1_0507_1903.tar.gz
+). Vitis is also included in this installer.
 
 For the installation procedure, see [UG973 : Vivado Design Suite User Guide: Release Notes, Installation, and Licensing](https://docs.amd.com/r/2023.1-English/ug973-vivado-release-notes-install-license/Release-Notes).
 
