@@ -439,7 +439,7 @@ Change to the tools directory and copy the mcs file you want to write.
 
 ```sh
 $ cd $workdir/hardware-drivers/tools/run_flash
-$ cp /path/to/OpenKasugai-fpga-example-design-1.0.0-1.mcs .
+$ cp $workdir/example-design/bitstream/OpenKasugai-fpga-example-design-1.0.0-1.mcs .
 ```
 
 Write the MCS file to the FPGA using `run_flash.sh`. The `-t` option specifies the MCS file and the `-i` option specifies the device index.
