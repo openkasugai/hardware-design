@@ -442,7 +442,7 @@ tools ディレクトリに移動し、書き込むmcsファイルをコピー�
 
 ```sh
 $ cd $workdir/hardware-drivers/tools/run_flash
-$ cp /path/to/OpenKasugai-fpga-example-design-1.0.0-1.mcs .
+$ cp $workdir/example-design/bitstream/OpenKasugai-fpga-example-design-1.0.0-1.mcs .
 ```
 
 `run_flash.sh` を使ってFPGAにMCSファイルを書き込みます。`-t` オプションでMCSファイルを指定し、`-i` オプションでデバイスのインデックスを指定します。
