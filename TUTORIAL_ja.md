@@ -23,7 +23,7 @@ FPGAカード2枚の構成です。D2D-H では FPGA間の転送においてホ�
 
 ## 2.1. Vivado/Vitis のインストール
 
-Vivado ML エディション 2023.1 を [AMD のダウンロードサイト](https://japan.xilinx.com/support/download/index.html/content/xilinx/ja/downloadNav/vivado-design-tools/2023-1.html) からダウンロードし、インストールします。Vitis もこのインストーラに含まれます。
+Vivado ML エディション 2023.1 を [AMD のダウンロードサイト](https://japan.xilinx.com/member/forms/download/xef.html?filename=Xilinx_Unified_2023.1_0507_1903.tar.gz) からダウンロードし、インストールします。Vitis もこのインストーラに含まれます。
 
 インストール手順は [UG973 : Vivado Design Suite User Guide: Release Notes, Installation, and Licensing](https://docs.amd.com/r/2023.1-English/ug973-vivado-release-notes-install-license/Release-Notes) を参照してください。
 
@@ -442,7 +442,7 @@ tools ディレクトリに移動し、書き込むmcsファイルをコピー�
 
 ```sh
 $ cd $workdir/hardware-drivers/tools/run_flash
-$ cp /path/to/OpenKasugai-fpga-example-design-1.0.0-1.mcs .
+$ cp $workdir/example-design/bitstream/OpenKasugai-fpga-example-design-1.0.0-1.mcs .
 ```
 
 `run_flash.sh` を使ってFPGAにMCSファイルを書き込みます。`-t` オプションでMCSファイルを指定し、`-i` オプションでデバイスのインデックスを指定します。
