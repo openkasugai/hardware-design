@@ -1,0 +1,2 @@
+# This file is automatically written.  Do not modify.
+proc gen_USERPARAMETER_SELF_DEST_ENABLEMENT {ENABLE_MULTI_CONTROLLER } {expr $ENABLE_MULTI_CONTROLLER==1}
