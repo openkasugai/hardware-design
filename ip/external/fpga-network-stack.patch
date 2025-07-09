@@ -1,0 +1,101 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index dc113e0..9c2d990 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -20,6 +20,8 @@ set(FNS_TCP_STACK_MAX_SESSIONS 1000 CACHE STRING "Maximum number of sessions the
+ set(FNS_TCP_STACK_MSS 4096 CACHE STRING "Maximum Segment Size (MSS)")
+ set(FNS_TCP_STACK_RX_DDR_BYPASS_EN 1 CACHE STRING "Enabling DDR bypass on the RX path")
+ set(FNS_TCP_STACK_WINDOW_SCALING_EN 1 CACHE STRING "Enabling TCP window scaling option")
++set(FNS_TCP_STACK_OPERATING_FREQ 156.25 CACHE STRING "TOE Operating frequency")
++set(FNS_TCP_STACK_WINDOW_SCALE_BITS 2 CACHE STRING "Window scale bits")
+ 
+ # HLS IPs
+ add_subdirectory(hls/arp_server_subnet)
+diff --git a/hls/toe/CMakeLists.txt b/hls/toe/CMakeLists.txt
+index 158c7b2..f5a0122 100644
+--- a/hls/toe/CMakeLists.txt
++++ b/hls/toe/CMakeLists.txt
+@@ -16,6 +16,8 @@ set(FNS_TCP_STACK_MAX_SESSIONS 1000 CACHE STRING "Maximum number of sessions the
+ set(FNS_TCP_STACK_MSS 4096 CACHE STRING "Maximum Segment Size (MSS)")
+ set(FNS_TCP_STACK_RX_DDR_BYPASS_EN 1 CACHE STRING "Enabling DDR bypass on the RX path")
+ set(FNS_TCP_STACK_WINDOW_SCALING_EN 1 CACHE STRING "Enabling TCP window scaling option")
++set(FNS_TCP_STACK_OPERATING_FREQ 156.25 CACHE STRING "Operating frequency")
++set(FNS_TCP_STACK_WINDOW_SCALE_BITS 2 CACHE STRING "Window scale bits")
+ 
+ # Find Vitis
+ find_package(Vitis REQUIRED)
+@@ -51,6 +53,8 @@ add_vitis_ip(${PROJECT_NAME}
+                     "-DRX_DDR_BYPASS=${FNS_TCP_STACK_RX_DDR_BYPASS_EN}"
+                     "-DFAST_RETRANSMIT=${FNS_TCP_STACK_FAST_RETRANSMIT_EN}"
+                     "-DWINDOW_SCALE=${FNS_TCP_STACK_WINDOW_SCALING_EN}"
++                    "-DTOE_OPERATING_FREQ=${FNS_TCP_STACK_OPERATING_FREQ}"
++                    "-DWINDOW_SCALE_BITS_MOD=${FNS_TCP_STACK_WINDOW_SCALE_BITS}"
+                     "-DFNS_ROCE_STACK_MAX_QPS=${FNS_ROCE_STACK_MAX_QPS}"
+                  PLATFORM_PART ${FNS_PLATFORM_PART}
+                  VENDOR "ethz.systems.fpga"
+diff --git a/hls/toe/toe.hpp b/hls/toe/toe.hpp
+index 922ae3a..81ef15a 100755
+--- a/hls/toe/toe.hpp
++++ b/hls/toe/toe.hpp
+@@ -42,7 +42,11 @@ const uint16_t MAX_SESSIONS = TCP_STACK_MAX_SESSIONS;
+ const unsigned DATA_WIDTH_BITS = ConstLog2(DATA_WIDTH);
+ const unsigned DATA_KEEP_BITS = ConstLog2(DATA_WIDTH/8);
+ 
++#ifdef WINDOW_SCALE_BITS_MOD
++const unsigned WINDOW_SCALE_BITS = WINDOW_SCALE_BITS_MOD;
++#else
+ const unsigned WINDOW_SCALE_BITS = 2;
++#endif
+ #if (WINDOW_SCALE)
+ const unsigned WINDOW_BITS = 16 + WINDOW_SCALE_BITS;
+ #else
+diff --git a/hls/toe/toe_internals.hpp b/hls/toe/toe_internals.hpp
+index 319ad9d..490af7b 100755
+--- a/hls/toe/toe_internals.hpp
++++ b/hls/toe/toe_internals.hpp
+@@ -24,24 +24,27 @@ static const ap_uint<32> TIME_30s		= 6;
+ static const ap_uint<32> TIME_60s		= 60;
+ static const ap_uint<32> TIME_120s		= 120;
+ #else
+-static const ap_uint<32> TIME_64us		= (       64.0/0.0064/MAX_SESSIONS) + 1;
+-static const ap_uint<32> TIME_128us		= (      128.0/0.0064/MAX_SESSIONS) + 1;
+-static const ap_uint<32> TIME_1ms		= (     1000.0/0.0064/MAX_SESSIONS) + 1;
+-static const ap_uint<32> TIME_5ms		= (     5000.0/0.0064/MAX_SESSIONS) + 1;
+-static const ap_uint<32> TIME_25ms		= (    25000.0/0.0064/MAX_SESSIONS) + 1;
+-static const ap_uint<32> TIME_50ms		= (    50000.0/0.0064/MAX_SESSIONS) + 1;
+-static const ap_uint<32> TIME_100ms		= (   100000.0/0.0064/MAX_SESSIONS) + 1;
+-static const ap_uint<32> TIME_250ms		= (   250000.0/0.0064/MAX_SESSIONS) + 1;
+-static const ap_uint<32> TIME_500ms		= (   500000.0/0.0064/MAX_SESSIONS) + 1;
+-static const ap_uint<32> TIME_1s		= (  1000000.0/0.0064/MAX_SESSIONS) + 1;
+-static const ap_uint<32> TIME_5s		= (  5000000.0/0.0064/MAX_SESSIONS) + 1;
+-static const ap_uint<32> TIME_7s		= (  7000000.0/0.0064/MAX_SESSIONS) + 1;
+-static const ap_uint<32> TIME_10s		= ( 10000000.0/0.0064/MAX_SESSIONS) + 1;
+-static const ap_uint<32> TIME_15s		= ( 15000000.0/0.0064/MAX_SESSIONS) + 1;
+-static const ap_uint<32> TIME_20s		= ( 20000000.0/0.0064/MAX_SESSIONS) + 1;
+-static const ap_uint<32> TIME_30s		= ( 30000000.0/0.0064/MAX_SESSIONS) + 1;
+-static const ap_uint<32> TIME_60s		= ( 60000000.0/0.0064/MAX_SESSIONS) + 1;
+-static const ap_uint<32> TIME_120s		= (120000000.0/0.0064/MAX_SESSIONS) + 1;
++#ifndef TOE_OPERATING_FREQ
++#define TOE_OPERATING_FREQ 156.25
++#endif
++static const ap_uint<32> TIME_64us		= (       64.0*(TOE_OPERATING_FREQ)/MAX_SESSIONS) + 1;
++static const ap_uint<32> TIME_128us		= (      128.0*(TOE_OPERATING_FREQ)/MAX_SESSIONS) + 1;
++static const ap_uint<32> TIME_1ms		= (     1000.0*(TOE_OPERATING_FREQ)/MAX_SESSIONS) + 1;
++static const ap_uint<32> TIME_5ms		= (     5000.0*(TOE_OPERATING_FREQ)/MAX_SESSIONS) + 1;
++static const ap_uint<32> TIME_25ms		= (    25000.0*(TOE_OPERATING_FREQ)/MAX_SESSIONS) + 1;
++static const ap_uint<32> TIME_50ms		= (    50000.0*(TOE_OPERATING_FREQ)/MAX_SESSIONS) + 1;
++static const ap_uint<32> TIME_100ms		= (   100000.0*(TOE_OPERATING_FREQ)/MAX_SESSIONS) + 1;
++static const ap_uint<32> TIME_250ms		= (   250000.0*(TOE_OPERATING_FREQ)/MAX_SESSIONS) + 1;
++static const ap_uint<32> TIME_500ms		= (   500000.0*(TOE_OPERATING_FREQ)/MAX_SESSIONS) + 1;
++static const ap_uint<32> TIME_1s		= (  1000000.0*(TOE_OPERATING_FREQ)/MAX_SESSIONS) + 1;
++static const ap_uint<32> TIME_5s		= (  5000000.0*(TOE_OPERATING_FREQ)/MAX_SESSIONS) + 1;
++static const ap_uint<32> TIME_7s		= (  7000000.0*(TOE_OPERATING_FREQ)/MAX_SESSIONS) + 1;
++static const ap_uint<32> TIME_10s		= ( 10000000.0*(TOE_OPERATING_FREQ)/MAX_SESSIONS) + 1;
++static const ap_uint<32> TIME_15s		= ( 15000000.0*(TOE_OPERATING_FREQ)/MAX_SESSIONS) + 1;
++static const ap_uint<32> TIME_20s		= ( 20000000.0*(TOE_OPERATING_FREQ)/MAX_SESSIONS) + 1;
++static const ap_uint<32> TIME_30s		= ( 30000000.0*(TOE_OPERATING_FREQ)/MAX_SESSIONS) + 1;
++static const ap_uint<32> TIME_60s		= ( 60000000.0*(TOE_OPERATING_FREQ)/MAX_SESSIONS) + 1;
++static const ap_uint<32> TIME_120s		= (120000000.0*(TOE_OPERATING_FREQ)/MAX_SESSIONS) + 1;
+ #endif
+ 
+ 

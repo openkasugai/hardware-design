@@ -1,0 +1,3 @@
+# This file is automatically written.  Do not modify.
+proc gen_USERPARAMETER_D2D_AXI_BASE_ENABLEMENT {IS_TX } {expr $IS_TX==0}
+proc gen_USERPARAMETER_D2D_AXI_RANGE_ENABLEMENT {IS_TX } {expr $IS_TX==0}
